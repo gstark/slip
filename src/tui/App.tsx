@@ -531,6 +531,8 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
               detail={task}
               error={detail.error}
               syntaxStyle={syntaxStyle}
+              // The scrollbox pads 2 columns on each side.
+              width={(narrow ? width : width - boardWidth) - 4}
               scrollRef={ticketRef}
               onJump={jump}
             />

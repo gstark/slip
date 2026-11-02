@@ -1,9 +1,14 @@
 /** @jsxImportSource @opentui/react */
-import type { ScrollBoxRenderable, SyntaxStyle } from "@opentui/core";
+import { StyledText, TextRenderable, createMarkdownCodeBlockRenderer, fg } from "@opentui/core";
+import type { RenderContext, ScrollBoxRenderable, SyntaxStyle } from "@opentui/core";
+import { useRenderer } from "@opentui/react";
+import { useMemo } from "react";
 import type { ReactNode, RefObject } from "react";
 import type { TaskDetail, TaskListItem, TaskSummary } from "../client.ts";
 import { statusOf } from "./board.ts";
 import { Flap } from "./Flap.tsx";
+import { mermaidArt, strokes } from "./mermaid.ts";
+import type { Stroke } from "./mermaid.ts";
 import { color, statusColor } from "./theme.ts";
 import { ago } from "./time.ts";
 
@@ -13,11 +18,15 @@ type Props = {
   detail: TaskDetail | undefined;
   error: string | null;
   syntaxStyle: SyntaxStyle;
+  /** The columns for the text, inside the padding. */
+  width: number;
   scrollRef: RefObject<ScrollBoxRenderable | null>;
   onJump: (shortId: string) => void;
 };
 
-export function Ticket({ item, detail, error, syntaxStyle, scrollRef, onJump }: Props) {
+export function Ticket({ item, detail, error, syntaxStyle, width, scrollRef, onJump }: Props) {
+  const renderer = useRenderer();
+  const renderNode = useMemo(() => mermaidBlocks(renderer, width), [renderer, width]);
   if (item === null) {
     return (
       <box flexGrow={1} paddingLeft={2} paddingTop={1}>
@@ -79,7 +88,7 @@ export function Ticket({ item, detail, error, syntaxStyle, scrollRef, onJump }: 
           )}
           {task.result !== null && task.result !== "" && (
             <Section title="Result">
-              <markdown content={task.result} syntaxStyle={syntaxStyle} />
+              <markdown content={task.result} syntaxStyle={syntaxStyle} renderNode={renderNode} />
             </Section>
           )}
           {task.commit !== null && (
@@ -95,7 +104,7 @@ export function Ticket({ item, detail, error, syntaxStyle, scrollRef, onJump }: 
             {task.description === "" ? (
               <text fg={color.soot}>No description. Press e to write one, or E to write it in your editor.</text>
             ) : (
-              <markdown content={task.description} syntaxStyle={syntaxStyle} />
+              <markdown content={task.description} syntaxStyle={syntaxStyle} renderNode={renderNode} />
             )}
           </Section>
           {task.children.length > 0 && (
@@ -113,6 +122,20 @@ export function Ticket({ item, detail, error, syntaxStyle, scrollRef, onJump }: 
       )}
     </scrollbox>
   );
+}
+
+const strokeColor: Record<Stroke, string> = { line: color.soot, arrow: color.flap, label: color.chalk };
+
+/** Draws ```mermaid blocks as diagrams. A block that does not parse, or does not fit, shows its source. */
+function mermaidBlocks(ctx: RenderContext, width: number) {
+  return createMarkdownCodeBlockRenderer({
+    mermaid: (token) => {
+      const art = mermaidArt(token.text, width);
+      if (art === null) return undefined;
+      const chunks = strokes(art).map(({ kind, text }) => fg(strokeColor[kind])(text));
+      return new TextRenderable(ctx, { content: new StyledText(chunks), wrapMode: "none", marginBottom: 1 });
+    },
+  });
 }
 
 function Meta({ label, value }: { label: string; value: string }) {
