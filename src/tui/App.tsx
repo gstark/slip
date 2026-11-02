@@ -388,12 +388,17 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     // Printable keys by their character, so "G" and "?" work on every layout. Tab, enter, and esc keep their names.
     const printable = key.sequence.length === 1 && key.sequence >= " " && key.sequence !== "\x7f";
     const name = printable && !key.ctrl && !key.meta ? key.sequence : key.name;
+    const ticket = ticketRef.current;
+    const ticketPage = Math.max(1, height - 8);
+    // The page keys scroll the ticket from either pane when the ticket shows.
+    if (!narrow || focus === "ticket") {
+      if (name === "pagedown") return ticket?.scrollBy(ticketPage);
+      if (name === "pageup") return ticket?.scrollBy(-ticketPage);
+    }
     if (focus === "ticket") {
-      const ticket = ticketRef.current;
       if (name === "j" || name === "down") return ticket?.scrollBy(1);
       if (name === "k" || name === "up") return ticket?.scrollBy(-1);
-      if (name === " " || name === "pagedown") return ticket?.scrollBy(Math.max(1, height - 8));
-      if (name === "pageup") return ticket?.scrollBy(-Math.max(1, height - 8));
+      if (name === " ") return ticket?.scrollBy(ticketPage);
       if (name === "tab" || name === "escape" || name === "h" || name === "left") return setFocus("board");
     }
     const page = Math.max(1, height - 6);
