@@ -387,7 +387,16 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     }
     // Printable keys by their character, so "G" and "?" work on every layout. Tab, enter, and esc keep their names.
     const printable = key.sequence.length === 1 && key.sequence >= " " && key.sequence !== "\x7f";
-    const name = printable && !key.ctrl && !key.meta ? key.sequence : key.name;
+    // Option with an arrow pages, because iTerm2 keeps PageUp and PageDown for its scrollback.
+    const alt = key.meta || key.option;
+    const name =
+      alt && key.name === "up"
+        ? "pageup"
+        : alt && key.name === "down"
+          ? "pagedown"
+          : printable && !key.ctrl && !key.meta
+            ? key.sequence
+            : key.name;
     const ticket = ticketRef.current;
     const ticketPage = Math.max(1, height - 8);
     // The page keys scroll the ticket from either pane when the ticket shows.

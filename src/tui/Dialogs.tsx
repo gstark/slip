@@ -221,7 +221,7 @@ export const KEYS: [string, [string, string][]][] = [
       ["h l  ← →", "Close or open a subtree"],
       ["enter", "Open or close the subtree"],
       ["tab", "Scroll the ticket with j and k, or go back to the board"],
-      ["pgup pgdn", "Scroll the ticket one page"],
+      ["⌥↑ ⌥↓", "Scroll the ticket one page. pgup and pgdn also work"],
       ["/", "Find tasks by name or ID"],
     ],
   ],
