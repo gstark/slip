@@ -75,7 +75,7 @@ describe("tasks.complete", () => {
     const { t, token, create } = await setup();
     const task = await create("A");
     await expectCode(
-      t.mutation(api.tasks.complete, { token, id: task.shortId, result: "x".repeat(50_001) }),
+      t.mutation(api.tasks.complete, { token, id: task.shortId, result: "x".repeat(1_000_001) }),
       "INVALID_INPUT",
     );
   });

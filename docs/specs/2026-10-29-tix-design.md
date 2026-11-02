@@ -70,16 +70,17 @@ flowchart LR
 | `projectId` | `Id<"projects">` | Required. |
 | `parentId` | `Id<"tasks">` | Optional. |
 | `shortId` | string | 8 characters, base36 (`0-9a-z`). The server creates it. |
-| `name` | string | Required. 1 to 50,000 characters. |
-| `description` | string | Default `""`. 50,000 characters at most. |
+| `name` | string | Required. At least 1 character. |
+| `description` | string | Default `""`. |
 | `priority` | number | Integer from 0 to 100. Default `1`. Lower numbers come first. |
 | `completed` | boolean | Default `false`. |
-| `result` | string | Optional. 50,000 characters at most. |
+| `result` | string | Optional. |
 | `startedAt` | number | Optional. Milliseconds since epoch. |
 | `completedAt` | number | Optional. Milliseconds since epoch. |
 | `commit` | object | Optional. `{ sha: string, branch?: string, message?: string }`. |
 
 - The create time comes from `_creationTime`.
+- Text fields have no per-field cap. The server rejects a write with `INVALID_INPUT` when the JSON form of the full document is above 1,000,000 bytes. This stays under the Convex limit of 1 MiB per document.
 - Indexes:
   - `by_shortId` on `shortId`.
   - `by_parent` on `parentId`.

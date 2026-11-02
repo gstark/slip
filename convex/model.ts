@@ -4,7 +4,10 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { fail } from "./errors";
 import type { commitValidator } from "./schema";
 
-const MAX_TEXT = 50_000;
+// Convex rejects a document above 1 MiB (1,048,576 bytes). The budget leaves room
+// for `_id`, `_creationTime`, and differences between JSON and Convex's own encoding.
+const MAX_DOC_BYTES = 1_000_000;
+const encoder = new TextEncoder();
 // Depth of the lowest allowed level: epic 0, task 1, subtask 2.
 const MAX_DEPTH = 2;
 const SHORT_ID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -31,8 +34,14 @@ export type TaskListItem = Omit<TaskView, "description">;
 export type TaskSummary = { shortId: string; name: string; completed: boolean };
 
 export function checkText(field: string, value: string, min: number): void {
-  if (value.length < min || value.length > MAX_TEXT) {
-    fail("INVALID_INPUT", `${field} must have ${min} to ${MAX_TEXT} characters`);
+  if (value.length < min) fail("INVALID_INPUT", `${field} must have at least ${min} character(s)`);
+}
+
+/** Rejects a document that would not fit in Convex. Call it with the full document before a write. */
+export function checkDocSize(doc: object): void {
+  const bytes = encoder.encode(JSON.stringify(doc)).byteLength;
+  if (bytes > MAX_DOC_BYTES) {
+    fail("INVALID_INPUT", `Document is ${bytes} bytes. The limit is ${MAX_DOC_BYTES} bytes`);
   }
 }
 

@@ -6,6 +6,7 @@ import { requireMachine } from "./auth";
 import { fail } from "./errors";
 import type { TaskListItem, TaskSummary } from "./model";
 import {
+  checkDocSize,
   checkParent,
   checkPriority,
   checkText,
@@ -40,13 +41,16 @@ export const create = mutation({
     checkPriority(priority);
 
     // A failed check later in this mutation rolls back this insert.
-    const projectId =
-      (await findProject(ctx, args.projectKey))?._id ??
-      (await ctx.db.insert("projects", { key: args.projectKey }));
+    let projectId = (await findProject(ctx, args.projectKey))?._id;
+    if (!projectId) {
+      const project = { key: args.projectKey };
+      checkDocSize(project);
+      projectId = await ctx.db.insert("projects", project);
+    }
     const parent = args.parent === undefined ? null : await findTask(ctx, args.parent);
     if (parent) await checkParent(ctx, projectId, parent);
 
-    const id = await ctx.db.insert("tasks", {
+    const doc = {
       projectId,
       parentId: parent?._id,
       shortId: await newShortId(ctx),
@@ -54,7 +58,9 @@ export const create = mutation({
       description,
       priority,
       completed: false,
-    });
+    };
+    checkDocSize(doc);
+    const id = await ctx.db.insert("tasks", doc);
     return toView(ctx, (await ctx.db.get(id))!, args.projectKey);
   },
 });
@@ -117,6 +123,7 @@ export const update = mutation({
       patch.parentId = parent._id;
     }
 
+    checkDocSize({ ...task, ...patch });
     await ctx.db.patch(task._id, patch);
     return viewOf(ctx, { ...task, ...patch });
   },
@@ -156,6 +163,7 @@ export const complete = mutation({
     };
     if (args.result !== undefined) patch.result = args.result;
     if (args.commit !== undefined) patch.commit = args.commit;
+    checkDocSize({ ...task, ...patch });
     await ctx.db.patch(task._id, patch);
     return viewOf(ctx, { ...task, ...patch });
   },

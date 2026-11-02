@@ -42,8 +42,8 @@ describe("tasks.create", () => {
   it("rejects out-of-range fields", async () => {
     const { create } = await setup();
     await expectCode(create(""), "INVALID_INPUT");
-    await expectCode(create("x".repeat(50_001)), "INVALID_INPUT");
-    await expectCode(create("A", { description: "x".repeat(50_001) }), "INVALID_INPUT");
+    await expectCode(create("x".repeat(1_000_001)), "INVALID_INPUT");
+    await expectCode(create("A", { description: "x".repeat(1_000_001) }), "INVALID_INPUT");
     await expectCode(create("A", { priority: -1 }), "INVALID_INPUT");
     await expectCode(create("A", { priority: 101 }), "INVALID_INPUT");
     await expectCode(create("A", { priority: 1.5 }), "INVALID_INPUT");
@@ -52,8 +52,21 @@ describe("tasks.create", () => {
 
   it("accepts the range limits", async () => {
     const { create } = await setup();
-    await expect(create("x".repeat(50_000), { priority: 0 })).resolves.toBeDefined();
+    await expect(create("x".repeat(999_000), { priority: 0 })).resolves.toBeDefined();
     await expect(create("A", { priority: 100 })).resolves.toBeDefined();
+  });
+
+  it("limits the whole document in bytes, not each field in characters", async () => {
+    const { create } = await setup();
+    // 500,001 two-byte characters is 1,000,002 bytes.
+    await expectCode(create("\u00e9".repeat(500_001)), "INVALID_INPUT");
+    await expectCode(
+      create("x".repeat(600_000), { description: "x".repeat(500_000) }),
+      "INVALID_INPUT",
+    );
+    await expect(
+      create("x".repeat(500_000), { description: "x".repeat(499_000) }),
+    ).resolves.toBeDefined();
   });
 
   it("throws NOT_FOUND for an unknown parent", async () => {
