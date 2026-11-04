@@ -56,6 +56,23 @@ describe("tix list", () => {
     expect(remoteUrl).not.toHaveBeenCalled();
   });
 
+  it("shows only the given tasks and all tasks under them", async () => {
+    const { client } = listing([
+      listItem({ shortId: "m1", name: "Main" }),
+      listItem({ shortId: "c1", name: "Child", parentShortId: "m1" }),
+      listItem({ shortId: "g1", name: "Grandchild", parentShortId: "c1" }),
+      listItem({ shortId: "o1", name: "Other" }),
+      listItem({ shortId: "s1", name: "Solo" }),
+    ]);
+    expect((await runCli(["list", "m1", "s1"], { client })).out).toBe(
+      "[ ] m1: Main\n└── [ ] c1: Child\n    └── [ ] g1: Grandchild\n[ ] s1: Solo",
+    );
+  });
+
+  it("prints No tasks when no task has a given ID", async () => {
+    expect((await runCli(["list", "zz"], { client: listing().client })).out).toBe("No tasks");
+  });
+
   it("prints No tasks for an empty list", async () => {
     expect((await runCli([], { client: listing([]).client })).out).toBe("No tasks");
   });

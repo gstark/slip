@@ -42,6 +42,7 @@ tix                                  # Open tasks of this project, as a tree
 tix list --ready                     # Open tasks that no open task blocks
 tix list --closed                    # Closed tasks
 tix list --all-projects              # Tasks of all projects
+tix list <id> <id>                   # Only these tasks and the tasks under them
 tix show <id>                        # All fields, subtasks, and blockers
 tix create "<name>" -d "<description>" [-p <priority>] [--parent <id>]
 tix edit <id> [--name <n>] [-d <desc>] [-p <prio>] [--parent <id> | --no-parent]
