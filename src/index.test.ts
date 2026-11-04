@@ -10,18 +10,18 @@ const entry = fileURLToPath(new URL("./index.ts", import.meta.url));
 describe("src/index.ts", () => {
   it("runs under Bun with no build step", async () => {
     const { stdout, stderr } = await run(process.execPath, [entry, "help"]);
-    expect(stdout).toContain("Usage: tix <command>");
+    expect(stdout).toContain("Usage: slip <command>");
     expect(stderr).toBe("");
   });
 
   it("exits with code 2 when there is no configuration", async () => {
-    const env = { PATH: process.env.PATH, TIX_CONFIG: "/nonexistent/tix/config.toml" };
+    const env = { PATH: process.env.PATH, SLIP_CONFIG: "/nonexistent/slip/config.toml" };
     const error = await run(process.execPath, [entry, "list", "--project", "x"], { env }).catch((e: unknown) => e);
     expect(error).toMatchObject({ code: 2, stderr: expect.stringContaining("No Convex URL or token") });
   });
 });
 
-describe("tix mcp", () => {
+describe("slip mcp", () => {
   it("answers tools/list over stdio", async () => {
     const child = spawn(process.execPath, [entry, "mcp"], { stdio: ["pipe", "pipe", "inherit"] });
     const lines = createInterface({ input: child.stdout });

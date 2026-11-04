@@ -8,7 +8,7 @@ import { fail } from "./errors";
 function randomToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   const base64 = btoa(String.fromCharCode(...bytes));
-  return `tix_${base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+  return `slip_${base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 }
 
 async function activeTokens(ctx: QueryCtx, name: string) {

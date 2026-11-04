@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import { fakeClient, runCli } from "../test.setup.ts";
 
 describe("main", () => {
@@ -15,13 +15,13 @@ describe("main", () => {
   });
 
   it("returns 1 for an unknown command", async () => {
-    expect(await runCli(["nope"])).toMatchObject({ code: 1, err: "Error: Unknown command nope. Run tix help" });
+    expect(await runCli(["nope"])).toMatchObject({ code: 1, err: "Error: Unknown command nope. Run slip help" });
   });
 
   it("returns 1 for an unknown option and names the command help", async () => {
     const { code, err } = await runCli(["projects", "--nope"]);
     expect(code).toBe(1);
-    expect(err).toContain("Unknown option '--nope'. Run tix help projects");
+    expect(err).toContain("Unknown option '--nope'. Run slip help projects");
   });
 
   it("returns 1 for an unexpected argument", async () => {
@@ -34,11 +34,11 @@ describe("main", () => {
     ["CONFIG", 2],
     ["NETWORK", 3],
   ] as const)("maps a %s error to exit code %i", async (code, exit) => {
-    const client = fakeClient({ listProjects: () => Promise.reject(new TixError(code, "Broken")) });
+    const client = fakeClient({ listProjects: () => Promise.reject(new SlipError(code, "Broken")) });
     expect(await runCli(["projects"], { client })).toMatchObject({ code: exit, err: "Error: Broken" });
   });
 
-  it("returns 1 for an error that is not a TixError", async () => {
+  it("returns 1 for an error that is not a SlipError", async () => {
     const client = fakeClient({ listProjects: () => Promise.reject(new Error("Server Error")) });
     expect(await runCli(["projects"], { client })).toMatchObject({ code: 1, err: "Error: Server Error" });
   });
@@ -47,7 +47,7 @@ describe("main", () => {
     const listProjects = vi.fn();
     const { code, out } = await runCli(["help"], { client: fakeClient({ listProjects }) });
     expect(code).toBe(0);
-    expect(out).toContain("Usage: tix <command> [options]");
+    expect(out).toContain("Usage: slip <command> [options]");
     expect(out).toContain("projects");
     expect(listProjects).not.toHaveBeenCalled();
   });
@@ -55,7 +55,7 @@ describe("main", () => {
   it("shows help for one command with help <command> and with --help", async () => {
     const viaHelp = await runCli(["help", "projects"]);
     const viaFlag = await runCli(["projects", "--help"]);
-    expect(viaHelp.out).toContain("Usage: tix projects");
+    expect(viaHelp.out).toContain("Usage: slip projects");
     expect(viaFlag).toEqual(viaHelp);
   });
 

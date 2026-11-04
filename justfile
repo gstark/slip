@@ -1,9 +1,10 @@
-# tix setup. Run `just` to list the recipes.
+# slip setup. Run `just` to list the recipes.
 
 set dotenv-load
 
-# The Convex team slug. Set TIX_TEAM in .env, or run `just team=<slug> <recipe>`.
-team := env("TIX_TEAM", "")
+# The Convex team slug. Set SLIP_TEAM in .env, or run `just team=<slug> <recipe>`.
+team := env("SLIP_TEAM", "")
+# The Convex project slug. The tool was called tix when the project was made, and the slug stays.
 project := "tix"
 convex := "bunx convex"
 
@@ -24,12 +25,12 @@ check-login:
       exit 1
     fi
 
-# Stop if the Convex login cannot reach the tix team
+# Stop if the Convex login cannot reach the slip team
 check-team: check-login
     #!/usr/bin/env bash
     set -euo pipefail
     if [ -z "{{team}}" ]; then
-      echo "Set TIX_TEAM=<team slug> in .env, or run: just team=<team slug> setup" >&2
+      echo "Set SLIP_TEAM=<team slug> in .env, or run: just team=<team slug> setup" >&2
       exit 1
     fi
     status=$({{convex}} login status 2>&1)
@@ -39,7 +40,7 @@ check-team: check-login
       exit 1
     fi
 
-# Link this directory to the tix project. Creates the project if it does not exist
+# Link this directory to the slip project. Creates the project if it does not exist
 link: check-team
     #!/usr/bin/env bash
     set -euo pipefail
@@ -57,7 +58,7 @@ link: check-team
 
 # Deploy the backend to production and print the production URL
 deploy: link
-    {{convex}} deploy --yes --cmd 'echo "Production URL: $TIX_URL"' --cmd-url-env-var-name TIX_URL
+    {{convex}} deploy --yes --cmd 'echo "Production URL: $SLIP_URL"' --cmd-url-env-var-name SLIP_URL
 
 # Make a token for one machine. Convex shows the token once
 token NAME: link
@@ -71,22 +72,30 @@ revoke NAME: link
 tokens: link
     {{convex}} run --prod tokens:list
 
-# Each machine: put tix on the PATH
+# Each machine: put slip on the PATH
 install:
     bun install --frozen-lockfile
     /bin/mkdir -p ~/.local/bin
-    /bin/ln -sfn {{justfile_directory()}}/src/index.ts ~/.local/bin/tix
-    @echo "Installed ~/.local/bin/tix. Next: tix login --url <url> --token <token>"
+    /bin/ln -sfn {{justfile_directory()}}/src/index.ts ~/.local/bin/slip
+    @echo "Installed ~/.local/bin/slip. Next: slip login --url <url> --token <token>"
 
-# Each machine: install the tix skills and MCP server in Claude Code
+# Each machine: install the slip skills and MCP server in Claude Code
 agent:
     #!/usr/bin/env bash
     set -euo pipefail
     marketplaces=$(claude plugin marketplace list --json)
-    if ! grep -q '"name": "tix"' <<<"$marketplaces"; then
+    plugins=$(claude plugin list --json)
+    # The plugin was called tix before 2026-11. Remove it, so Claude Code does not start two MCP servers.
+    if grep -q '"tix@tix"' <<<"$plugins"; then
+      claude plugin uninstall tix@tix --scope user
+    fi
+    if grep -q '"name": "tix"' <<<"$marketplaces"; then
+      claude plugin marketplace remove tix
+    fi
+    if ! grep -q '"name": "slip"' <<<"$marketplaces"; then
       claude plugin marketplace add {{justfile_directory()}}
     fi
     plugins=$(claude plugin list --json)
-    if ! grep -q '"tix@tix"' <<<"$plugins"; then
-      claude plugin install tix@tix --scope user
+    if ! grep -q '"slip@slip"' <<<"$plugins"; then
+      claude plugin install slip@slip --scope user
     fi

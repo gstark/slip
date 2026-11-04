@@ -1,4 +1,4 @@
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import { formatLine } from "../format.ts";
 import { onePositional, print, priorityOption, stringOption } from "./command.ts";
 import type { Command } from "./command.ts";
@@ -26,7 +26,7 @@ export const edit: Command = {
     const id = onePositional(input, "id");
     const noParent = input.values["no-parent"] === true;
     const parentId = stringOption(input, "parent");
-    if (noParent && parentId !== undefined) throw new TixError("USAGE", "Use --parent or --no-parent, not both");
+    if (noParent && parentId !== undefined) throw new SlipError("USAGE", "Use --parent or --no-parent, not both");
     const fields = {
       name: stringOption(input, "name"),
       description: stringOption(input, "description"),
@@ -34,7 +34,7 @@ export const edit: Command = {
       parent: noParent ? null : parentId,
     };
     if (Object.values(fields).every((value) => value === undefined)) {
-      throw new TixError("USAGE", "Nothing to change. Run tix help edit");
+      throw new SlipError("USAGE", "Nothing to change. Run slip help edit");
     }
     const task = await (await ctx.client()).updateTask({ id, ...fields });
     print(ctx, input, task, () => [formatLine(task)]);

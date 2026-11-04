@@ -1,6 +1,6 @@
 import type { ParseArgsOptionsConfig } from "node:util";
-import type { TixClient } from "../client.ts";
-import { TixError } from "../errors.ts";
+import type { SlipClient } from "../client.ts";
+import { SlipError } from "../errors.ts";
 import type { Git } from "../git.ts";
 import { resolveProject } from "../project.ts";
 
@@ -12,7 +12,7 @@ export type Context = {
   env: Env;
   git: Git;
   /** Makes the client on first use, so `login` and `help` work with no configuration. */
-  client: () => Promise<TixClient>;
+  client: () => Promise<SlipClient>;
   out: (text: string) => void;
   err: (text: string) => void;
 };
@@ -29,7 +29,7 @@ export type Command = {
   name: string;
   usage: string;
   summary: string;
-  /** More help lines for `tix help <command>`. */
+  /** More help lines for `slip help <command>`. */
   notes?: string[];
   options?: ParseArgsOptionsConfig;
   run: (ctx: Context, input: Input) => Promise<void>;
@@ -46,13 +46,13 @@ export function print(ctx: Context, input: Input, json: unknown, lines: () => st
 
 export function noPositionals(input: Input): void {
   if (input.positionals.length > 0) {
-    throw new TixError("USAGE", `Unexpected argument ${input.positionals[0]}`);
+    throw new SlipError("USAGE", `Unexpected argument ${input.positionals[0]}`);
   }
 }
 
 /** The one positional argument of the command, for example `<id>`. */
 export function onePositional(input: Input, label: string): string {
-  if (input.positionals.length !== 1) throw new TixError("USAGE", `Expected one <${label}> argument`);
+  if (input.positionals.length !== 1) throw new SlipError("USAGE", `Expected one <${label}> argument`);
   return input.positionals[0];
 }
 
@@ -63,7 +63,7 @@ export function stringOption(input: Input, name: string): string | undefined {
 
 export function requiredOption(input: Input, name: string): string {
   const value = stringOption(input, name);
-  if (value === undefined) throw new TixError("USAGE", `--${name} is required`);
+  if (value === undefined) throw new SlipError("USAGE", `--${name} is required`);
   return value;
 }
 
@@ -71,7 +71,7 @@ export function requiredOption(input: Input, name: string): string {
 export function priorityOption(input: Input): number | undefined {
   const value = stringOption(input, "priority");
   if (value === undefined) return undefined;
-  if (!/^-?\d+$/.test(value)) throw new TixError("USAGE", `--priority must be an integer, not ${value}`);
+  if (!/^-?\d+$/.test(value)) throw new SlipError("USAGE", `--priority must be an integer, not ${value}`);
   return Number(value);
 }
 

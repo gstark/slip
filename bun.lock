@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "tix",
+      "name": "slip",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.32.2",
         "@opentui/core": "^0.8.0",

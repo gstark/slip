@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../config.ts";
 import { runCli } from "../test.setup.ts";
 
-describe("tix login", () => {
+describe("slip login", () => {
   let dir: string;
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "tix-login-"));
+    dir = mkdtempSync(join(tmpdir(), "slip-login-"));
   });
 
   afterEach(() => {
@@ -17,9 +17,9 @@ describe("tix login", () => {
   });
 
   it("saves the configuration without a client", async () => {
-    const env = { TIX_CONFIG: join(dir, "config.toml") };
+    const env = { SLIP_CONFIG: join(dir, "config.toml") };
     const result = await runCli(["login", "--url", "https://x.convex.cloud", "--token", "secret"], { env });
-    expect(result).toEqual({ code: 0, out: `Saved the configuration to ${env.TIX_CONFIG}`, err: "" });
+    expect(result).toEqual({ code: 0, out: `Saved the configuration to ${env.SLIP_CONFIG}`, err: "" });
     expect(await loadConfig(env)).toEqual({ convexUrl: "https://x.convex.cloud", token: "secret" });
   });
 

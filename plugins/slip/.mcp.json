@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "slip": { "command": "slip", "args": ["mcp"] }
+  }
+}

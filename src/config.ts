@@ -1,15 +1,36 @@
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { parse, stringify } from "smol-toml";
-import { TixError } from "./errors.ts";
+import { SlipError } from "./errors.ts";
 
 export type Config = { convexUrl: string; token: string };
 
 type Env = Record<string, string | undefined>;
 
 export function configPath(env: Env): string {
-  return env.TIX_CONFIG ?? join(homedir(), ".config", "tix", "config.toml");
+  return env.SLIP_CONFIG ?? join(homedir(), ".config", "slip", "config.toml");
+}
+
+function isMissing(error: unknown): boolean {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
+}
+
+/** Moves `~/.config/tix` to `~/.config/slip` once. The tool was called tix before 2026-11. */
+async function moveLegacyConfigDir(env: Env): Promise<void> {
+  if (env.SLIP_CONFIG !== undefined) return;
+  const current = dirname(configPath(env));
+  try {
+    await access(current);
+    return;
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+  try {
+    await rename(join(homedir(), ".config", "tix"), current);
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
 }
 
 async function readTable(path: string): Promise<Record<string, unknown>> {
@@ -17,30 +38,32 @@ async function readTable(path: string): Promise<Record<string, unknown>> {
   try {
     text = await readFile(path, "utf8");
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return {};
+    if (isMissing(error)) return {};
     throw error;
   }
   try {
     return parse(text);
   } catch {
-    throw new TixError("CONFIG", `Cannot parse ${path}. It must be TOML`);
+    throw new SlipError("CONFIG", `Cannot parse ${path}. It must be TOML`);
   }
 }
 
-/** Reads the file, then applies TIX_CONVEX_URL and TIX_TOKEN on top. */
+/** Reads the file, then applies SLIP_CONVEX_URL and SLIP_TOKEN on top. */
 export async function loadConfig(env: Env): Promise<Config> {
+  await moveLegacyConfigDir(env);
   const path = configPath(env);
   const table = await readTable(path);
-  const convexUrl = env.TIX_CONVEX_URL ?? table.convex_url;
-  const token = env.TIX_TOKEN ?? table.token;
+  const convexUrl = env.SLIP_CONVEX_URL ?? table.convex_url;
+  const token = env.SLIP_TOKEN ?? table.token;
   if (typeof convexUrl !== "string" || typeof token !== "string" || convexUrl === "" || token === "") {
-    throw new TixError("CONFIG", `No Convex URL or token in ${path}. Run tix login --url <url> --token <token>`);
+    throw new SlipError("CONFIG", `No Convex URL or token in ${path}. Run slip login --url <url> --token <token>`);
   }
   return { convexUrl, token };
 }
 
 /** Writes the file with mode 0600 and returns its path. */
 export async function saveConfig(env: Env, config: Config): Promise<string> {
+  await moveLegacyConfigDir(env);
   const path = configPath(env);
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   await writeFile(path, stringify({ convex_url: config.convexUrl, token: config.token }) + "\n", { mode: 0o600 });

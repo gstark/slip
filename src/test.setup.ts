@@ -1,7 +1,7 @@
 import { stripVTControlCharacters } from "node:util";
 import type { Env } from "./cli/command.ts";
 import { main } from "./cli/main.ts";
-import type { TaskDetail, TaskListItem, TaskView, TixClient } from "./client.ts";
+import type { TaskDetail, TaskListItem, TaskView, SlipClient } from "./client.ts";
 import type { Git } from "./git.ts";
 
 export const PROJECT = "github.com/acme/api";
@@ -40,7 +40,7 @@ export function taskDetail(fields: Partial<TaskDetail> = {}): TaskDetail {
  * A client where each method fails unless the test gives it.
  * A test passes vi.fn() methods to check the arguments.
  */
-export function fakeClient(methods: Partial<TixClient> = {}): TixClient {
+export function fakeClient(methods: Partial<SlipClient> = {}): SlipClient {
   const unexpected = (name: string) => () => Promise.reject(new Error(`Unexpected client call: ${name}`));
   return {
     createTask: unexpected("createTask"),
@@ -59,7 +59,7 @@ export function fakeClient(methods: Partial<TixClient> = {}): TixClient {
   };
 }
 
-type RunOptions = { client?: TixClient; git?: Partial<Git>; cwd?: string; env?: Env };
+type RunOptions = { client?: SlipClient; git?: Partial<Git>; cwd?: string; env?: Env };
 
 /** Runs the CLI with fakes. `out` and `err` have no colors. */
 export async function runCli(argv: string[], options: RunOptions = {}) {

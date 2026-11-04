@@ -6,7 +6,7 @@ export const login: Command = {
   name: "login",
   usage: "login --url <url> --token <token>",
   summary: "Write the local configuration.",
-  notes: ["", "The file is ~/.config/tix/config.toml, or TIX_CONFIG. It has mode 0600."],
+  notes: ["", "The file is ~/.config/slip/config.toml, or SLIP_CONFIG. It has mode 0600."],
   options: { url: { type: "string" }, token: { type: "string" } },
   async run(ctx, input) {
     noPositionals(input);

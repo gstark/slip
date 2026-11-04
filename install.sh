@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
-# Installs or updates tix on this machine:
-#   curl -fsSL https://raw.githubusercontent.com/gstark/tix/main/install.sh | bash
+# Installs or updates slip on this machine:
+#   curl -fsSL https://raw.githubusercontent.com/gstark/slip/main/install.sh | bash
 #
 # Environment:
-#   TIX_DIR   Checkout directory. Default: ~/.local/share/tix
-#   TIX_REPO  Repository to clone. Default: https://github.com/gstark/tix.git
+#   SLIP_DIR   Checkout directory. Default: ~/.local/share/slip
+#   SLIP_REPO  Repository to clone. Default: https://github.com/gstark/slip.git
 #
 # The function wrapper makes bash read the full script before it runs a command.
 set -euo pipefail
 
 main() {
-  local dir="${TIX_DIR:-$HOME/.local/share/tix}"
-  local repo="${TIX_REPO:-https://github.com/gstark/tix.git}"
+  local dir="${SLIP_DIR:-$HOME/.local/share/slip}"
+  local repo="${SLIP_REPO:-https://github.com/gstark/slip.git}"
   local bin="$HOME/.local/bin"
 
   need git
   need bun
   # Bun 1.4 writes bun.lock version 2. Older Bun cannot read it.
   if ! bun -e 'const [major, minor] = Bun.version.split(".").map(Number); process.exit(major > 1 || minor >= 4 ? 0 : 1)'; then
-    fail "tix needs Bun 1.4 or later. This machine has Bun $(bun --version). Run bun upgrade, then run this script again."
+    fail "slip needs Bun 1.4 or later. This machine has Bun $(bun --version). Run bun upgrade, then run this script again."
   fi
 
   if [ -d "$dir/.git" ]; then
@@ -34,39 +34,47 @@ main() {
 
   (cd "$dir" && bun install --frozen-lockfile --production)
   mkdir -p "$bin"
-  ln -sfn "$dir/src/index.ts" "$bin/tix"
-  echo "Installed $bin/tix"
+  ln -sfn "$dir/src/index.ts" "$bin/slip"
+  echo "Installed $bin/slip"
 
   if command -v claude >/dev/null; then
     install_plugin "$dir"
   else
-    echo "Claude Code is not installed. Skipped the tix plugin."
+    echo "Claude Code is not installed. Skipped the slip plugin."
   fi
 
   case ":$PATH:" in
     *":$bin:"*) ;;
     *) echo "Add $bin to your PATH." ;;
   esac
-  if [ ! -f "${TIX_CONFIG:-$HOME/.config/tix/config.toml}" ]; then
-    echo "Next: tix login --url <production URL> --token <token>"
+  if [ ! -f "${SLIP_CONFIG:-$HOME/.config/slip/config.toml}" ]; then
+    echo "Next: slip login --url <production URL> --token <token>"
   fi
 }
 
 install_plugin() {
   local marketplaces plugins
   marketplaces=$(claude plugin marketplace list --json)
-  if ! grep -q '"name": "tix"' <<<"$marketplaces"; then
+  plugins=$(claude plugin list --json)
+  # The plugin was called tix before 2026-11. Remove it, so Claude Code does not start two MCP servers.
+  if grep -q '"tix@tix"' <<<"$plugins"; then
+    claude plugin uninstall tix@tix --scope user
+  fi
+  if grep -q '"name": "tix"' <<<"$marketplaces"; then
+    claude plugin marketplace remove tix
+  fi
+  if ! grep -q '"name": "slip"' <<<"$marketplaces"; then
     claude plugin marketplace add "$1"
   fi
   plugins=$(claude plugin list --json)
-  if ! grep -q '"tix@tix"' <<<"$plugins"; then
-    claude plugin install tix@tix --scope user
+  if ! grep -q '"slip@slip"' <<<"$plugins"; then
+    claude plugin install slip@slip --scope user
   fi
-  echo "Installed the tix plugin in Claude Code"
+  echo "Installed the slip plugin in Claude Code"
 }
 
 need() {
-  command -v "$1" >/dev/null || fail "tix needs $1. Install it, then run this script again."
+  command -v "$1" >/dev/null || fail "slip needs $1. Install it, then run this script again."
 }
 
 fail() {

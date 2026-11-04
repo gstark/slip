@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Commit, TixClient } from "../client.ts";
+import type { Commit, SlipClient } from "../client.ts";
 import { fakeClient, runCli, taskView } from "../test.setup.ts";
 
 const COMMIT: Commit = { sha: "abc1234", branch: "main", message: "fix: parser" };
 
-describe("tix start and tix reopen", () => {
+describe("slip start and slip reopen", () => {
   it("starts a task and prints the task line", async () => {
-    const startTask = vi.fn<TixClient["startTask"]>(async () => taskView({ shortId: "a1", startedAt: 1 }));
+    const startTask = vi.fn<SlipClient["startTask"]>(async () => taskView({ shortId: "a1", startedAt: 1 }));
     expect(await runCli(["start", "a1"], { client: fakeClient({ startTask }) })).toEqual({
       code: 0,
       out: "[>] a1: Task",
@@ -16,15 +16,15 @@ describe("tix start and tix reopen", () => {
   });
 
   it("reopens a task", async () => {
-    const reopenTask = vi.fn<TixClient["reopenTask"]>(async () => taskView({ shortId: "a1" }));
+    const reopenTask = vi.fn<SlipClient["reopenTask"]>(async () => taskView({ shortId: "a1" }));
     expect((await runCli(["reopen", "a1"], { client: fakeClient({ reopenTask }) })).out).toBe("[ ] a1: Task");
     expect(reopenTask).toHaveBeenCalledWith({ id: "a1" });
   });
 });
 
-describe("tix done", () => {
+describe("slip done", () => {
   it("closes a task with a result and the commit from git", async () => {
-    const completeTask = vi.fn<TixClient["completeTask"]>(async () => taskView({ shortId: "a1", completed: true }));
+    const completeTask = vi.fn<SlipClient["completeTask"]>(async () => taskView({ shortId: "a1", completed: true }));
     const commit = vi.fn(async () => COMMIT);
     const result = await runCli(["done", "a1", "-r", "Fixed", "--commit", "HEAD"], {
       client: fakeClient({ completeTask }),
@@ -36,7 +36,7 @@ describe("tix done", () => {
   });
 
   it("does not read git without --commit", async () => {
-    const completeTask = vi.fn<TixClient["completeTask"]>(async () => taskView({ completed: true }));
+    const completeTask = vi.fn<SlipClient["completeTask"]>(async () => taskView({ completed: true }));
     const commit = vi.fn(async () => COMMIT);
     await runCli(["done", "a1"], { client: fakeClient({ completeTask }), git: { commit } });
     expect(commit).not.toHaveBeenCalled();
@@ -52,9 +52,9 @@ describe("tix done", () => {
   });
 });
 
-describe("tix delete", () => {
+describe("slip delete", () => {
   it("prints the deleted IDs", async () => {
-    const removeTask = vi.fn<TixClient["removeTask"]>(async () => ["a1", "c1"]);
+    const removeTask = vi.fn<SlipClient["removeTask"]>(async () => ["a1", "c1"]);
     expect((await runCli(["delete", "a1"], { client: fakeClient({ removeTask }) })).out).toBe(
       "Deleted 2 task(s): a1, c1",
     );
@@ -62,7 +62,7 @@ describe("tix delete", () => {
   });
 
   it("prints the deleted IDs as JSON", async () => {
-    const removeTask = vi.fn<TixClient["removeTask"]>(async () => ["a1"]);
+    const removeTask = vi.fn<SlipClient["removeTask"]>(async () => ["a1"]);
     expect(JSON.parse((await runCli(["delete", "a1", "--json"], { client: fakeClient({ removeTask }) })).out)).toEqual([
       "a1",
     ]);

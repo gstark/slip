@@ -1,5 +1,5 @@
 import type { ListFilter, TaskListItem } from "../client.ts";
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import { formatGroups, formatTree } from "../format.ts";
 import { print, projectKey } from "./command.ts";
 import type { Command } from "./command.ts";
@@ -34,7 +34,7 @@ export const list: Command = {
     "  --ready           Show open tasks that no open task blocks",
     "  --all-projects    Show tasks of all projects, grouped by project",
     "",
-    "`tix` with no command runs `tix list`.",
+    "`slip` with no command runs `slip list`.",
   ],
   options: {
     closed: { type: "boolean" },
@@ -44,7 +44,7 @@ export const list: Command = {
   },
   async run(ctx, input) {
     const chosen = FILTERS.filter((name) => input.values[name] === true);
-    if (chosen.length > 1) throw new TixError("USAGE", "Use only one of --closed, --all, and --ready");
+    if (chosen.length > 1) throw new SlipError("USAGE", "Use only one of --closed, --all, and --ready");
     const filter: ListFilter = chosen[0] ?? "open";
     const allProjects = input.values["all-projects"] === true;
     const key = allProjects ? undefined : await projectKey(ctx, input);

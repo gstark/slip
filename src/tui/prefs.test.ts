@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadBoardWidth, saveBoardWidth, uiPath } from "./prefs.ts";
 
 let dir: string;
-let env: { TIX_CONFIG: string };
+let env: { SLIP_CONFIG: string };
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tix-ui-"));
-  env = { TIX_CONFIG: join(dir, "nested", "config.toml") };
+  dir = mkdtempSync(join(tmpdir(), "slip-ui-"));
+  env = { SLIP_CONFIG: join(dir, "nested", "config.toml") };
   mkdirSync(dirname(uiPath(env)), { recursive: true });
 });
 
@@ -18,12 +18,12 @@ afterEach(() => {
 });
 
 describe("uiPath", () => {
-  it("uses the directory of TIX_CONFIG", () => {
-    expect(uiPath({ TIX_CONFIG: "/x/tix.toml" })).toBe("/x/ui.toml");
+  it("uses the directory of SLIP_CONFIG", () => {
+    expect(uiPath({ SLIP_CONFIG: "/x/slip.toml" })).toBe("/x/ui.toml");
   });
 
-  it("defaults to ~/.config/tix/ui.toml", () => {
-    expect(uiPath({})).toMatch(/\.config\/tix\/ui\.toml$/);
+  it("defaults to ~/.config/slip/ui.toml", () => {
+    expect(uiPath({})).toMatch(/\.config\/slip\/ui\.toml$/);
   });
 });
 
@@ -54,7 +54,7 @@ describe("loadBoardWidth", () => {
   });
 
   it("creates the directory when it saves", async () => {
-    const deep = { TIX_CONFIG: join(dir, "a", "b", "config.toml") };
+    const deep = { SLIP_CONFIG: join(dir, "a", "b", "config.toml") };
     await saveBoardWidth(deep, 40);
     expect(await loadBoardWidth(deep)).toBe(40);
   });

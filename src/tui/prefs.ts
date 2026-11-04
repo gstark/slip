@@ -5,7 +5,7 @@ import { configPath } from "../config.ts";
 
 type Env = Record<string, string | undefined>;
 
-/** UI state sits next to config.toml. `TIX_CONFIG` selects that directory. */
+/** UI state sits next to config.toml. `SLIP_CONFIG` selects that directory. */
 export function uiPath(env: Env): string {
   return join(dirname(configPath(env)), "ui.toml");
 }

@@ -112,7 +112,7 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
 
   const copyText = (text: string, done: string) => {
     const copied = renderer.copyToClipboardOSC52(text);
-    flash(copied ? done : "This terminal does not let tix use the clipboard", copied ? "ok" : "error");
+    flash(copied ? done : "This terminal does not let slip use the clipboard", copied ? "ok" : "error");
   };
 
   const resizeList = (column: number) => {
@@ -128,7 +128,7 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     void onBoardWidth(next).catch((error: unknown) => flash(`Cannot save the list width: ${messageOf(error)}`, "error"));
   };
 
-  // tix takes the mouse, so the terminal has no selection for its own copy key. Copy the selection when the drag ends.
+  // slip takes the mouse, so the terminal has no selection for its own copy key. Copy the selection when the drag ends.
   useSelectionHandler((selection) => {
     const text = selection.getSelectedText();
     if (text.trim() !== "") copyText(text, `Copied ${text.length} character${text.length === 1 ? "" : "s"}`);
@@ -273,7 +273,7 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     },
     editor: async () => {
       if (task === undefined) return;
-      const file = join(tmpdir(), `tix-${task.shortId}.md`);
+      const file = join(tmpdir(), `slip-${task.shortId}.md`);
       await Bun.write(file, task.description);
       const editor = process.env.VISUAL ?? process.env.EDITOR ?? "vi";
       await renderer.suspend();
@@ -680,7 +680,7 @@ function Header({ scope, filter, tasks, connected, compact, onFilter, onProjects
   return (
     <box height={1} flexShrink={0} flexDirection="row" paddingLeft={2} paddingRight={2}>
       <text fg={color.flap} flexShrink={0}>
-        <strong>tix</strong>
+        <strong>slip</strong>
       </text>
       <box marginLeft={3} flexShrink={0} onMouseDown={onProjects}>
         {scope.kind === "all" ? (

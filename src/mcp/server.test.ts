@@ -1,8 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Commit, TixClient } from "../client.ts";
-import { TixError } from "../errors.ts";
+import type { Commit, SlipClient } from "../client.ts";
+import { SlipError } from "../errors.ts";
 import type { Git } from "../git.ts";
 import { PROJECT, fakeClient, listItem, taskDetail, taskView } from "../test.setup.ts";
 import { createMcpServer } from "./server.ts";
@@ -14,7 +14,7 @@ let close: () => Promise<void> = async () => {};
 afterEach(() => close());
 
 /** Connects an MCP client to a server that uses the fakes. */
-async function connect(client: TixClient, git: Partial<Git> = {}) {
+async function connect(client: SlipClient, git: Partial<Git> = {}) {
   const server = createMcpServer({
     cwd: "/work/api",
     git: { remoteUrl: async () => "git@github.com:acme/api.git", commit: async () => null, ...git },
@@ -37,7 +37,7 @@ async function connect(client: TixClient, git: Partial<Git> = {}) {
   return { mcp, call };
 }
 
-describe("tix MCP server", () => {
+describe("slip MCP server", () => {
   it("lists the tools", async () => {
     const { mcp } = await connect(fakeClient());
     const { tools } = await mcp.listTools();
@@ -51,7 +51,7 @@ describe("tix MCP server", () => {
   });
 
   it("creates a task in the project of the git remote", async () => {
-    const createTask = vi.fn<TixClient["createTask"]>(async () => taskView({ shortId: "new11111" }));
+    const createTask = vi.fn<SlipClient["createTask"]>(async () => taskView({ shortId: "new11111" }));
     const { call } = await connect(fakeClient({ createTask }));
     const result = await call("create_task", { name: "Fix", description: "Details", priority: 2 });
     expect(result.isError).toBe(false);
@@ -66,7 +66,7 @@ describe("tix MCP server", () => {
   });
 
   it("uses the project argument before the git remote", async () => {
-    const createTask = vi.fn<TixClient["createTask"]>(async () => taskView());
+    const createTask = vi.fn<SlipClient["createTask"]>(async () => taskView());
     const remoteUrl = vi.fn(async () => null);
     const { call } = await connect(fakeClient({ createTask }), { remoteUrl });
     await call("create_task", { name: "Fix", project: "github.com/acme/web" });
@@ -75,7 +75,7 @@ describe("tix MCP server", () => {
   });
 
   it("returns an error result when there is no project, and keeps running", async () => {
-    const listTasks = vi.fn<TixClient["listTasks"]>(async () => []);
+    const listTasks = vi.fn<SlipClient["listTasks"]>(async () => []);
     const { call } = await connect(fakeClient({ listTasks }), { remoteUrl: async () => null });
     const failed = await call("list_tasks", {});
     expect(failed).toEqual({
@@ -87,7 +87,7 @@ describe("tix MCP server", () => {
 
   it("lists tasks with the open filter by default", async () => {
     const items = [listItem({ shortId: "a1" })];
-    const listTasks = vi.fn<TixClient["listTasks"]>(async () => items);
+    const listTasks = vi.fn<SlipClient["listTasks"]>(async () => items);
     const { call } = await connect(fakeClient({ listTasks }));
     expect(JSON.parse((await call("list_tasks", {})).text)).toEqual(items);
     await call("list_tasks", { filter: "ready" });
@@ -96,14 +96,14 @@ describe("tix MCP server", () => {
   });
 
   it("shows a task", async () => {
-    const getTask = vi.fn<TixClient["getTask"]>(async () => taskDetail({ shortId: "a1" }));
+    const getTask = vi.fn<SlipClient["getTask"]>(async () => taskDetail({ shortId: "a1" }));
     const { call } = await connect(fakeClient({ getTask }));
     expect(JSON.parse((await call("show_task", { id: "a1" })).text)).toEqual(taskDetail({ shortId: "a1" }));
     expect(getTask).toHaveBeenCalledWith({ id: "a1" });
   });
 
   it("edits a task and sends parent null to make a root task", async () => {
-    const updateTask = vi.fn<TixClient["updateTask"]>(async () => taskView());
+    const updateTask = vi.fn<SlipClient["updateTask"]>(async () => taskView());
     const { call } = await connect(fakeClient({ updateTask }));
     await call("update_task", { action: "edit", id: "a1", name: "New", parent: null });
     expect(updateTask).toHaveBeenCalledWith({
@@ -139,7 +139,7 @@ describe("tix MCP server", () => {
   });
 
   it("completes a task with the commit from git", async () => {
-    const completeTask = vi.fn<TixClient["completeTask"]>(async () => taskView({ completed: true }));
+    const completeTask = vi.fn<SlipClient["completeTask"]>(async () => taskView({ completed: true }));
     const commit = vi.fn(async () => COMMIT);
     const { call } = await connect(fakeClient({ completeTask }), { commit });
     await call("update_task", { action: "complete", id: "a1", result: "Fixed", commit: "HEAD" });
@@ -156,7 +156,7 @@ describe("tix MCP server", () => {
   });
 
   it("deletes a task and returns the deleted IDs", async () => {
-    const removeTask = vi.fn<TixClient["removeTask"]>(async () => ["a1", "c1"]);
+    const removeTask = vi.fn<SlipClient["removeTask"]>(async () => ["a1", "c1"]);
     const { call } = await connect(fakeClient({ removeTask }));
     expect(JSON.parse((await call("update_task", { action: "delete", id: "a1" })).text)).toEqual({
       deleted: ["a1", "c1"],
@@ -164,8 +164,8 @@ describe("tix MCP server", () => {
   });
 
   it("adds and removes blockers", async () => {
-    const addBlocker = vi.fn<TixClient["addBlocker"]>(async () => taskView({ blockedBy: ["b1"] }));
-    const removeBlocker = vi.fn<TixClient["removeBlocker"]>(async () => taskView());
+    const addBlocker = vi.fn<SlipClient["addBlocker"]>(async () => taskView({ blockedBy: ["b1"] }));
+    const removeBlocker = vi.fn<SlipClient["removeBlocker"]>(async () => taskView());
     const { call } = await connect(fakeClient({ addBlocker, removeBlocker }));
     await call("manage_blockers", { action: "add", id: "a1", blocker: "b1" });
     await call("manage_blockers", { action: "remove", id: "a1", blocker: "b1" });
@@ -175,7 +175,7 @@ describe("tix MCP server", () => {
 
   it("returns server errors as error results", async () => {
     const getTask = vi.fn(async () => {
-      throw new TixError("NOT_FOUND", "Task zz not found");
+      throw new SlipError("NOT_FOUND", "Task zz not found");
     });
     const { call } = await connect(fakeClient({ getTask }));
     expect(await call("show_task", { id: "zz" })).toEqual({ isError: true, text: "Task zz not found" });

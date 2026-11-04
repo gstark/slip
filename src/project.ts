@@ -1,4 +1,4 @@
-import { TixError } from "./errors.ts";
+import { SlipError } from "./errors.ts";
 
 /**
  * Turns a git remote URL into a project key: lowercase host and path, with no
@@ -36,11 +36,11 @@ export async function resolveProject(
   if (flag !== undefined) return flag;
   const remote = await readRemote();
   if (remote === null) {
-    throw new TixError("USAGE", "No git remote origin in this directory. Use --project <key>");
+    throw new SlipError("USAGE", "No git remote origin in this directory. Use --project <key>");
   }
   const key = normalizeRemote(remote);
   if (key === null) {
-    throw new TixError("USAGE", `Cannot make a project key from remote ${remote}. Use --project <key>`);
+    throw new SlipError("USAGE", `Cannot make a project key from remote ${remote}. Use --project <key>`);
   }
   return key;
 }

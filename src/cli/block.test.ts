@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import type { TixClient } from "../client.ts";
+import type { SlipClient } from "../client.ts";
 import { fakeClient, runCli, taskView } from "../test.setup.ts";
 
-describe("tix block and tix unblock", () => {
+describe("slip block and slip unblock", () => {
   it("adds a blocker and prints the task line", async () => {
-    const addBlocker = vi.fn<TixClient["addBlocker"]>(async () => taskView({ shortId: "a1", blockedBy: ["b1"] }));
+    const addBlocker = vi.fn<SlipClient["addBlocker"]>(async () => taskView({ shortId: "a1", blockedBy: ["b1"] }));
     expect(await runCli(["block", "a1", "--by", "b1"], { client: fakeClient({ addBlocker }) })).toEqual({
       code: 0,
       out: "[ ] a1 [B: b1]: Task",
@@ -14,7 +14,7 @@ describe("tix block and tix unblock", () => {
   });
 
   it("removes a blocker", async () => {
-    const removeBlocker = vi.fn<TixClient["removeBlocker"]>(async () => taskView({ shortId: "a1" }));
+    const removeBlocker = vi.fn<SlipClient["removeBlocker"]>(async () => taskView({ shortId: "a1" }));
     expect((await runCli(["unblock", "a1", "--by", "b1"], { client: fakeClient({ removeBlocker }) })).out).toBe(
       "[ ] a1: Task",
     );

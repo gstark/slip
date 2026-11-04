@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import type { TixClient } from "../client.ts";
+import type { SlipClient } from "../client.ts";
 import { PROJECT, fakeClient, listItem, runCli } from "../test.setup.ts";
 
 function listing(items = [listItem({ shortId: "a1", name: "Fix" })]) {
-  const listTasks = vi.fn<TixClient["listTasks"]>(async () => items);
+  const listTasks = vi.fn<SlipClient["listTasks"]>(async () => items);
   return { listTasks, client: fakeClient({ listTasks }) };
 }
 
-describe("tix list", () => {
+describe("slip list", () => {
   it("lists open tasks of the git remote project as a tree", async () => {
     const { listTasks, client } = listing();
     expect(await runCli([], { client })).toEqual({ code: 0, out: "[ ] a1: Fix", err: "" });

@@ -3,7 +3,7 @@ import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex
 import { ConvexError } from "convex/values";
 import { api } from "../convex/_generated/api.js";
 import type { ErrorCode } from "../convex/errors.ts";
-import { TixError } from "./errors.ts";
+import { SlipError } from "./errors.ts";
 
 type Args<F extends FunctionReference<"query" | "mutation">> = Omit<FunctionArgs<F>, "token">;
 
@@ -17,7 +17,7 @@ export type EventView = FunctionReturnType<typeof api.events.list>[number];
 export type ListFilter = Args<typeof api.tasks.list>["filter"];
 
 /** The calls that the CLI and the MCP server make. Tests use a fake. */
-export interface TixClient {
+export interface SlipClient {
   createTask(args: Args<typeof api.tasks.create>): Promise<TaskView>;
   getTask(args: Args<typeof api.tasks.get>): Promise<TaskDetail>;
   updateTask(args: Args<typeof api.tasks.update>): Promise<TaskView>;
@@ -38,24 +38,24 @@ function isErrorData(data: unknown): data is ErrorData {
   return typeof data === "object" && data !== null && "code" in data && "message" in data;
 }
 
-/** Turns a Convex or fetch error into a TixError. Other errors pass through. */
-export function toTixError(error: unknown, url: string): unknown {
+/** Turns a Convex or fetch error into a SlipError. Other errors pass through. */
+export function toSlipError(error: unknown, url: string): unknown {
   if (error instanceof ConvexError && isErrorData(error.data)) {
-    return new TixError(error.data.code, error.data.message);
+    return new SlipError(error.data.code, error.data.message);
   }
   // fetch throws a TypeError when it cannot connect.
-  if (error instanceof TypeError) return new TixError("NETWORK", `Cannot reach Convex at ${url}`);
+  if (error instanceof TypeError) return new SlipError("NETWORK", `Cannot reach Convex at ${url}`);
   return error;
 }
 
-export function convexClient(url: string, token: string): TixClient {
+export function convexClient(url: string, token: string): SlipClient {
   // logger: false keeps Convex log lines off stdout, which the MCP server uses.
   const http = new ConvexHttpClient(url, { logger: false });
   async function call<T>(run: () => Promise<T>): Promise<T> {
     try {
       return await run();
     } catch (error) {
-      throw toTixError(error, url);
+      throw toSlipError(error, url);
     }
   }
   return {

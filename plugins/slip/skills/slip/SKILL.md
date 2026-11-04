@@ -1,11 +1,11 @@
 ---
-name: tix
-description: Track code tasks with the tix CLI. Use to break down complex work, track implementation items, or keep context across sessions and machines.
+name: slip
+description: Track code tasks with the slip CLI. Use to break down complex work, track implementation items, or keep context across sessions and machines.
 ---
 
-# Track Code Tasks with tix
+# Track Code Tasks with slip
 
-`tix` stores private code tasks in Convex. Every machine sees the same tasks. `tix` finds the project from the `origin` remote of the current directory.
+`slip` stores private code tasks in Convex. Every machine sees the same tasks. `slip` finds the project from the `origin` remote of the current directory.
 
 ## Tasks Are Tickets
 
@@ -17,44 +17,44 @@ A task has three text fields:
 
 Another agent must understand the what, why, and how from the task alone.
 
-Do not put tix IDs in commits, pull requests, or documents. The IDs mean nothing outside tix. Describe the work instead.
+Do not put slip IDs in commits, pull requests, or documents. The IDs mean nothing outside slip. Describe the work instead.
 
-## When to Use tix
+## When to Use slip
 
-Use tix when:
+Use slip when:
 
 - You break complex work into subtasks.
 - The work continues in another session or on another machine.
 - You must keep context for a handoff.
 - You must record decisions.
 
-Do not use tix when:
+Do not use slip when:
 
 - The work is one small action.
 - The work fits in this session and has no follow-up.
 
-The built-in task tools of your agent last for one session only. Use them for steps inside this session. Use tix for work that must persist.
+The built-in task tools of your agent last for one session only. Use them for steps inside this session. Use slip for work that must persist.
 
 ## Commands
 
 ```bash
-tix                                  # Open tasks of this project, as a tree
-tix list --ready                     # Open tasks that no open task blocks
-tix list --closed                    # Closed tasks
-tix list --all-projects              # Tasks of all projects
-tix list <id> <id>                   # Only these tasks and the tasks under them
-tix show <id>                        # All fields, subtasks, and blockers
-tix create "<name>" -d "<description>" [-p <priority>] [--parent <id>]
-tix edit <id> [--name <n>] [-d <desc>] [-p <prio>] [--parent <id> | --no-parent]
-tix start <id>                       # Record the start time
-tix done <id> -r "<result>" [--commit <ref>]
-tix reopen <id>
-tix delete <id>                      # Also deletes all subtasks
-tix block <id> --by <blocker-id>
-tix unblock <id> --by <blocker-id>
-tix projects                         # Projects with open task counts
-tix log [<id>] [-n <count>]          # Recent activity, newest first
-tix help <command>
+slip                                  # Open tasks of this project, as a tree
+slip list --ready                     # Open tasks that no open task blocks
+slip list --closed                    # Closed tasks
+slip list --all-projects              # Tasks of all projects
+slip list <id> <id>                   # Only these tasks and the tasks under them
+slip show <id>                        # All fields, subtasks, and blockers
+slip create "<name>" -d "<description>" [-p <priority>] [--parent <id>]
+slip edit <id> [--name <n>] [-d <desc>] [-p <prio>] [--parent <id> | --no-parent]
+slip start <id>                       # Record the start time
+slip done <id> -r "<result>" [--commit <ref>]
+slip reopen <id>
+slip delete <id>                      # Also deletes all subtasks
+slip block <id> --by <blocker-id>
+slip unblock <id> --by <blocker-id>
+slip projects                         # Projects with open task counts
+slip log [<id>] [-n <count>]          # Recent activity, newest first
+slip help <command>
 ```
 
 Every command accepts `--json` and `--project <key>`. Use `--project` when the current directory has no git remote.
@@ -66,9 +66,9 @@ Priority is a number from 0 to 100. A lower number is more important. The defaul
 Read the full context:
 
 ```bash
-tix show <id>              # The task
-tix show <parent-id>       # The parent, if the task has one
-tix show <blocker-id>      # What a closed blocker did
+slip show <id>              # The task
+slip show <parent-id>       # The parent, if the task has one
+slip show <blocker-id>      # What a closed blocker did
 ```
 
 Make sure that you can answer these questions:
@@ -80,7 +80,7 @@ Make sure that you can answer these questions:
 
 If an answer is not clear, read the parent and the blockers. If it is still not clear, suggest plan mode before you start.
 
-Then run `tix start <id>`.
+Then run `slip start <id>`.
 
 ## Hierarchies
 
@@ -93,17 +93,17 @@ A tree has 3 levels at most: epic, task, and subtask.
 Give each parent 3 to 7 children. Each task must fit in one focused session.
 
 ```bash
-tix create "Add token verification" --parent <id> -d "..."
+slip create "Add token verification" --parent <id> -d "..."
 ```
 
 A task with open subtasks cannot close. Close the subtasks first.
 
 ## Blockers
 
-Use a blocker when one task must close before another can start. `tix list --ready` leaves out blocked tasks.
+Use a blocker when one task must close before another can start. `slip list --ready` leaves out blocked tasks.
 
 ```bash
-tix block <id> --by <blocker-id>
+slip block <id> --by <blocker-id>
 ```
 
 ## Close a Task
@@ -111,10 +111,10 @@ tix block <id> --by <blocker-id>
 Close a task immediately after you implement and verify it:
 
 ```bash
-tix done <id> -r "<result>" --commit HEAD
+slip done <id> -r "<result>" --commit HEAD
 ```
 
-- `--commit` takes a git ref. tix reads the SHA, branch, and message from git.
+- `--commit` takes a git ref. slip reads the SHA, branch, and message from git.
 - Leave out `--commit` for work with no code change, such as a plan or an investigation.
 
 The result must include verification evidence:
@@ -140,4 +140,4 @@ A bad result: "Done. Added auth."
 
 ## MCP Tools
 
-The tix plugin also starts `tix mcp`. Its tools are `create_task`, `list_tasks`, `show_task`, `update_task`, and `manage_blockers`. They do the same as the CLI. Use the tools or the CLI, whichever is available.
+The slip plugin also starts `slip mcp`. Its tools are `create_task`, `list_tasks`, `show_task`, `update_task`, and `manage_blockers`. They do the same as the CLI. Use the tools or the CLI, whichever is available.

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { EventView, TixClient } from "../client.ts";
+import type { EventView, SlipClient } from "../client.ts";
 import { PROJECT, fakeClient, runCli } from "../test.setup.ts";
 
 function event(fields: Partial<EventView> = {}): EventView {
@@ -16,11 +16,11 @@ function event(fields: Partial<EventView> = {}): EventView {
 }
 
 function logging(events = [event()]) {
-  const listEvents = vi.fn<TixClient["listEvents"]>(async () => events);
+  const listEvents = vi.fn<SlipClient["listEvents"]>(async () => events);
   return { listEvents, client: fakeClient({ listEvents }) };
 }
 
-describe("tix log", () => {
+describe("slip log", () => {
   it("shows the activity of the git remote project", async () => {
     const { listEvents, client } = logging([event(), event({ kind: "edited", detail: "name, priority" })]);
     const { code, out } = await runCli(["log"], { client });

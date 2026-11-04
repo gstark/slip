@@ -2,7 +2,7 @@ import { ConvexClient } from "convex/browser";
 import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 import { getFunctionName } from "convex/server";
 import { useMemo, useSyncExternalStore } from "react";
-import { toTixError } from "../client.ts";
+import { toSlipError } from "../client.ts";
 import type { Config } from "../config.ts";
 
 type Query = FunctionReference<"query">;
@@ -30,7 +30,7 @@ export class Live {
   }
 
   private withToken<F extends Query | Mutation>(args: Args<F>): FunctionArgs<F> {
-    // The args type of every tix function is its own fields and the token.
+    // The args type of every slip function is its own fields and the token.
     return { ...args, token: this.token } as FunctionArgs<F>;
   }
 
@@ -48,8 +48,8 @@ export class Live {
             listener();
           },
           (error) => {
-            const tix = toTixError(error, this.url);
-            snapshot = { data: snapshot.data, error: tix instanceof Error ? tix.message : String(tix) };
+            const slip = toSlipError(error, this.url);
+            snapshot = { data: snapshot.data, error: slip instanceof Error ? slip.message : String(slip) };
             listener();
           },
         );
@@ -75,7 +75,7 @@ export class Live {
     try {
       return await this.client.mutation(mutation, this.withToken<M>(args));
     } catch (error) {
-      throw toTixError(error, this.url);
+      throw toSlipError(error, this.url);
     }
   }
 

@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import type { ParseArgsOptionsConfig } from "node:util";
-import { TixError, exitCodeOf } from "../errors.ts";
+import { SlipError, exitCodeOf } from "../errors.ts";
 import type { Command, Context } from "./command.ts";
 import { commands } from "./commands.ts";
 import { helpLines } from "./help.ts";
@@ -17,13 +17,13 @@ function isParseArgsError(error: unknown): error is Error {
 
 function find(name: string): Command {
   const command = commands.find((candidate) => candidate.name === name);
-  if (!command) throw new TixError("USAGE", `Unknown command ${name}. Run tix help`);
+  if (!command) throw new SlipError("USAGE", `Unknown command ${name}. Run slip help`);
   return command;
 }
 
 /** Runs one CLI command and returns the exit code. */
 export async function main(argv: string[], ctx: Context): Promise<number> {
-  // `tix` and `tix --ready` run `list`.
+  // `slip` and `slip --ready` run `list`.
   const implicit = argv.length === 0 || argv[0].startsWith("-");
   const name = implicit ? "list" : argv[0];
   const args = implicit ? argv : argv.slice(1);
@@ -47,13 +47,13 @@ export async function main(argv: string[], ctx: Context): Promise<number> {
     });
     return 0;
   } catch (error) {
-    if (error instanceof TixError) {
+    if (error instanceof SlipError) {
       ctx.err(`Error: ${error.message}`);
       return exitCodeOf(error.code);
     }
     if (isParseArgsError(error)) {
       // Node adds a long hint after the first sentence. Keep only the first sentence.
-      ctx.err(`Error: ${error.message.split(". ")[0]}. Run tix help ${name}`);
+      ctx.err(`Error: ${error.message.split(". ")[0]}. Run slip help ${name}`);
       return 1;
     }
     ctx.err(`Error: ${error instanceof Error ? error.message : String(error)}`);

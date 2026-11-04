@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import type { TixClient } from "../client.ts";
+import type { SlipClient } from "../client.ts";
 import { fakeClient, runCli, taskView } from "../test.setup.ts";
 
 function editing() {
-  const updateTask = vi.fn<TixClient["updateTask"]>(async () => taskView({ shortId: "a1", name: "New" }));
+  const updateTask = vi.fn<SlipClient["updateTask"]>(async () => taskView({ shortId: "a1", name: "New" }));
   return { updateTask, client: fakeClient({ updateTask }) };
 }
 
-describe("tix edit", () => {
+describe("slip edit", () => {
   it("sends only the given fields and prints the task line", async () => {
     const { updateTask, client } = editing();
     const result = await runCli(["edit", "a1", "--name", "New", "-p", "0"], { client });
@@ -35,6 +35,6 @@ describe("tix edit", () => {
   });
 
   it("rejects an edit with no fields", async () => {
-    expect(await runCli(["edit", "a1"])).toMatchObject({ code: 1, err: "Error: Nothing to change. Run tix help edit" });
+    expect(await runCli(["edit", "a1"])).toMatchObject({ code: 1, err: "Error: Nothing to change. Run slip help edit" });
   });
 });

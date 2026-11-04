@@ -4,7 +4,7 @@ import type { Commit } from "./client.ts";
 
 const run = promisify(execFile);
 
-/** The git reads that tix makes. Tests can pass a fake. */
+/** The git reads that slip makes. Tests can pass a fake. */
 export interface Git {
   /** The URL of the origin remote, or null if there is none. */
   remoteUrl(cwd: string): Promise<string | null>;

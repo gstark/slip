@@ -1,5 +1,5 @@
 {
-  "name": "tix",
+  "name": "slip",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -29,6 +29,6 @@
     "vitest": "^5.0.5"
   },
   "bin": {
-    "tix": "src/index.ts"
+    "slip": "src/index.ts"
   }
 }

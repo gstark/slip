@@ -1,0 +1,6 @@
+{
+  "name": "slip",
+  "version": "0.1.0",
+  "description": "slip skills and the slip MCP server",
+  "author": { "name": "Gavin Stark" }
+}

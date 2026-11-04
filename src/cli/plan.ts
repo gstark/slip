@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import { parsePlan } from "../plan.ts";
 import { onePositional, print, projectKey } from "./command.ts";
 import type { Command } from "./command.ts";
@@ -20,7 +20,7 @@ export const plan: Command = {
     try {
       content = await readFile(resolve(ctx.cwd, file), "utf8");
     } catch {
-      throw new TixError("USAGE", `Cannot read ${file}`);
+      throw new SlipError("USAGE", `Cannot read ${file}`);
     }
     const parsed = parsePlan(content, file);
     const key = await projectKey(ctx, input);

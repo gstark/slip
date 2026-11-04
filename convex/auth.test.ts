@@ -3,9 +3,9 @@ import { api, internal } from "./_generated/api";
 import { expectCode, setup } from "./test.setup";
 
 describe("machine tokens", () => {
-  it("returns a raw token with the tix_ prefix", async () => {
+  it("returns a raw token with the slip_ prefix", async () => {
     const { token } = await setup();
-    expect(token).toMatch(/^tix_[A-Za-z0-9_-]{43}$/);
+    expect(token).toMatch(/^slip_[A-Za-z0-9_-]{43}$/);
   });
 
   it("stores only the SHA-256 hash", async () => {
@@ -48,7 +48,7 @@ describe("requireMachine", () => {
 
   it("rejects an unknown token", async () => {
     const { t } = await setup();
-    await expectCode(t.query(api.projects.list, { token: "tix_unknown" }), "UNAUTHORIZED");
+    await expectCode(t.query(api.projects.list, { token: "slip_unknown" }), "UNAUTHORIZED");
   });
 
   it("rejects an empty token", async () => {
@@ -64,7 +64,7 @@ describe("requireMachine", () => {
 });
 
 describe("public functions", () => {
-  const BAD = "tix_unknown";
+  const BAD = "slip_unknown";
   const ID = "zzzzzzzz";
   const cases: [string, (t: Awaited<ReturnType<typeof setup>>["t"]) => Promise<unknown>][] = [
     ["tasks.create", (t) => t.mutation(api.tasks.create, { token: BAD, projectKey: "p", name: "n" })],

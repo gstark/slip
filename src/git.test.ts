@@ -12,7 +12,7 @@ function git(...args: string[]): string {
 }
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tix-git-"));
+  dir = mkdtempSync(join(tmpdir(), "slip-git-"));
   git("init", "--quiet", "--initial-branch", "main");
   git("-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--quiet", "--allow-empty", "-m", "fix: parser");
 });

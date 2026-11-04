@@ -1,4 +1,4 @@
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import { formatEvents } from "../format.ts";
 import { print, projectKey, stringOption } from "./command.ts";
 import type { Command } from "./command.ts";
@@ -20,10 +20,10 @@ export const log: Command = {
     "all-projects": { type: "boolean" },
   },
   async run(ctx, input) {
-    if (input.positionals.length > 1) throw new TixError("USAGE", "Expected at most one <id> argument");
+    if (input.positionals.length > 1) throw new SlipError("USAGE", "Expected at most one <id> argument");
     const task = input.positionals[0];
     const raw = stringOption(input, "limit");
-    if (raw !== undefined && !/^\d+$/.test(raw)) throw new TixError("USAGE", `--limit must be an integer, not ${raw}`);
+    if (raw !== undefined && !/^\d+$/.test(raw)) throw new SlipError("USAGE", `--limit must be an integer, not ${raw}`);
     const limit = raw === undefined ? undefined : Number(raw);
     const allProjects = input.values["all-projects"] === true;
     // A task ID finds the task in any project, so git is not needed.

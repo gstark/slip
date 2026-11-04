@@ -28,8 +28,8 @@ function subscribeTick(listener: () => void): () => void {
 const getNow = () => now;
 const noSubscribe = () => () => {};
 
-/** Set TIX_MOTION=off to show each new word at once. */
-const motion = process.env.TIX_MOTION !== "off";
+/** Set SLIP_MOTION=off to show each new word at once. */
+const motion = process.env.SLIP_MOTION !== "off";
 
 type Turn = { from: string; to: string; at: number };
 

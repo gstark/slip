@@ -1,15 +1,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod";
-import type { TixClient } from "../client.ts";
-import { TixError } from "../errors.ts";
+import type { SlipClient } from "../client.ts";
+import { SlipError } from "../errors.ts";
 import type { Git } from "../git.ts";
 import { resolveProject } from "../project.ts";
 
-/** What the server needs. The CLI `Context` has these fields, so `tix mcp` passes its context. */
+/** What the server needs. The CLI `Context` has these fields, so `slip mcp` passes its context. */
 export type McpContext = {
   cwd: string;
   git: Git;
-  client: () => Promise<TixClient>;
+  client: () => Promise<SlipClient>;
 };
 
 type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -39,7 +39,7 @@ const updateFields = {
 } as const;
 
 export function createMcpServer(ctx: McpContext): McpServer {
-  const server = new McpServer({ name: "tix", version: "0.1.0" });
+  const server = new McpServer({ name: "slip", version: "0.1.0" });
   const projectKey = (flag: string | undefined) => resolveProject(flag, () => ctx.git.remoteUrl(ctx.cwd));
 
   server.registerTool(
@@ -117,7 +117,7 @@ export function createMcpServer(ctx: McpContext): McpServer {
         priority: priority.optional(),
         parent: z.string().min(1).nullable().optional(),
         result: z.string().optional().describe("What was done, like a pull request description"),
-        commit: z.string().min(1).optional().describe("A git ref. tix reads the SHA, branch, and message from git"),
+        commit: z.string().min(1).optional().describe("A git ref. slip reads the SHA, branch, and message from git"),
       },
     },
     (args) =>
@@ -125,12 +125,12 @@ export function createMcpServer(ctx: McpContext): McpServer {
         const { action, id, ...fields } = args;
         const allowed: readonly string[] = updateFields[action];
         const extra = Object.keys(fields).filter((field) => !allowed.includes(field));
-        if (extra.length > 0) throw new TixError("USAGE", `${extra.join(", ")} cannot be used with action ${action}`);
+        if (extra.length > 0) throw new SlipError("USAGE", `${extra.join(", ")} cannot be used with action ${action}`);
 
         const client = await ctx.client();
         switch (action) {
           case "edit":
-            if (Object.keys(fields).length === 0) throw new TixError("USAGE", "Nothing to change");
+            if (Object.keys(fields).length === 0) throw new SlipError("USAGE", "Nothing to change");
             return client.updateTask({
               id,
               name: fields.name,
@@ -142,7 +142,7 @@ export function createMcpServer(ctx: McpContext): McpServer {
             return client.startTask({ id });
           case "complete": {
             const commit = fields.commit === undefined ? undefined : await ctx.git.commit(ctx.cwd, fields.commit);
-            if (commit === null) throw new TixError("USAGE", `${fields.commit} is not a commit in ${ctx.cwd}`);
+            if (commit === null) throw new SlipError("USAGE", `${fields.commit} is not a commit in ${ctx.cwd}`);
             return client.completeTask({ id, result: fields.result, commit });
           }
           case "reopen":

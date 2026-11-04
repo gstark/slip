@@ -1,11 +1,11 @@
 ---
-name: tix-plan
-description: Create a tix task from a markdown plan, spec, design document, or roadmap, and break it into subtasks when that helps.
+name: slip-plan
+description: Create a slip task from a markdown plan, spec, design document, or roadmap, and break it into subtasks when that helps.
 ---
 
-# Convert a Markdown Plan to tix Tasks
+# Convert a Markdown Plan to slip Tasks
 
-Use `/tix-plan <file.md>` to turn a planning document into a tix task.
+Use `/slip-plan <file.md>` to turn a planning document into a slip task.
 
 ## When to Use
 
@@ -21,11 +21,11 @@ Do not use it when:
 ## Step 1: Create the Main Task
 
 ```bash
-tix plan <file.md>
+slip plan <file.md>
 ```
 
 - The name is the first `# ` heading. Without a heading, the name is the file name without `.md`.
-- tix removes a `Plan: ` prefix from the name.
+- slip removes a `Plan: ` prefix from the name.
 - The description is the full file content.
 - The command prints the short ID of the new task. Keep it.
 
@@ -60,13 +60,13 @@ For each work item:
 3. Create it:
 
 ```bash
-tix create "<name>" --parent <main-id> -d "<description>"
+slip create "<name>" --parent <main-id> -d "<description>"
 ```
 
 When a step must wait for another step, add a blocker:
 
 ```bash
-tix block <later-id> --by <earlier-id>
+slip block <later-id> --by <earlier-id>
 ```
 
 ## Step 4: Report
@@ -78,7 +78,7 @@ Created task <id> from <file.md>.
 Found <N> separate steps. Created <N> subtasks:
 - <id>: <name>
 - <id>: <name>
-See the tree: tix
+See the tree: slip
 ```
 
 Without subtasks:
@@ -86,5 +86,5 @@ Without subtasks:
 ```
 Created task <id> from <file.md>.
 The plan is one cohesive task. I did not make subtasks.
-See the task: tix show <id>
+See the task: slip show <id>
 ```

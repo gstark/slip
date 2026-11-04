@@ -1,13 +1,13 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "tix",
+  "name": "slip",
   "description": "Private code task tracking on Convex",
   "owner": { "name": "Gavin Stark" },
   "plugins": [
     {
-      "name": "tix",
-      "description": "tix skills and the tix MCP server",
-      "source": "./plugins/tix",
+      "name": "slip",
+      "description": "slip skills and the slip MCP server",
+      "source": "./plugins/slip",
       "category": "productivity"
     }
   ]

@@ -1,4 +1,4 @@
-import { TixError } from "../errors.ts";
+import { SlipError } from "../errors.ts";
 import type { Command } from "./command.ts";
 
 const GLOBAL_OPTIONS = [
@@ -13,7 +13,7 @@ export function helpLines(commands: Command[], name?: string): string[] {
   if (name === undefined) {
     const width = Math.max(...commands.map((command) => command.usage.length));
     return [
-      "Usage: tix <command> [options]",
+      "Usage: slip <command> [options]",
       "",
       "Commands:",
       ...commands.map((command) => `  ${command.usage.padEnd(width)}  ${command.summary}`),
@@ -22,6 +22,6 @@ export function helpLines(commands: Command[], name?: string): string[] {
     ];
   }
   const command = commands.find((candidate) => candidate.name === name);
-  if (!command) throw new TixError("USAGE", `Unknown command ${name}. Run tix help`);
-  return [`Usage: tix ${command.usage}`, "", command.summary, ...(command.notes ?? []), "", ...GLOBAL_OPTIONS];
+  if (!command) throw new SlipError("USAGE", `Unknown command ${name}. Run slip help`);
+  return [`Usage: slip ${command.usage}`, "", command.summary, ...(command.notes ?? []), "", ...GLOBAL_OPTIONS];
 }

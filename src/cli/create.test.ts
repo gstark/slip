@@ -2,15 +2,15 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TixClient } from "../client.ts";
+import type { SlipClient } from "../client.ts";
 import { PROJECT, fakeClient, runCli, taskDetail, taskView } from "../test.setup.ts";
 
 function creating() {
-  const createTask = vi.fn<TixClient["createTask"]>(async () => taskView({ shortId: "new11111" }));
+  const createTask = vi.fn<SlipClient["createTask"]>(async () => taskView({ shortId: "new11111" }));
   return { createTask, client: fakeClient({ createTask }) };
 }
 
-describe("tix create", () => {
+describe("slip create", () => {
   it("creates a task and prints the short ID", async () => {
     const { createTask, client } = creating();
     const result = await runCli(["create", "Fix parser", "-d", "Details", "-p", "2", "--parent", "e1"], { client });
@@ -51,9 +51,9 @@ describe("tix create", () => {
   });
 });
 
-describe("tix show", () => {
+describe("slip show", () => {
   it("prints the task detail", async () => {
-    const getTask = vi.fn<TixClient["getTask"]>(async () => taskDetail({ shortId: "a1", name: "Fix" }));
+    const getTask = vi.fn<SlipClient["getTask"]>(async () => taskDetail({ shortId: "a1", name: "Fix" }));
     const { code, out } = await runCli(["show", "a1"], { client: fakeClient({ getTask }) });
     expect(code).toBe(0);
     expect(out.split("\n")[0]).toBe("[ ] a1: Fix");
@@ -61,11 +61,11 @@ describe("tix show", () => {
   });
 });
 
-describe("tix plan", () => {
+describe("slip plan", () => {
   let dir: string;
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "tix-plan-"));
+    dir = mkdtempSync(join(tmpdir(), "slip-plan-"));
   });
 
   afterEach(() => {
