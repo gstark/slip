@@ -13,6 +13,7 @@ export type TaskListItem = FunctionReturnType<typeof api.tasks.list>[number];
 export type TaskSummary = TaskDetail["blockers"][number];
 export type ProjectCount = FunctionReturnType<typeof api.projects.list>[number];
 export type Commit = NonNullable<TaskView["commit"]>;
+export type EventView = FunctionReturnType<typeof api.events.list>[number];
 export type ListFilter = Args<typeof api.tasks.list>["filter"];
 
 /** The calls that the CLI and the MCP server make. Tests use a fake. */
@@ -28,6 +29,7 @@ export interface TixClient {
   addBlocker(args: Args<typeof api.blockers.add>): Promise<TaskView>;
   removeBlocker(args: Args<typeof api.blockers.remove>): Promise<TaskView>;
   listProjects(): Promise<ProjectCount[]>;
+  listEvents(args: Args<typeof api.events.list>): Promise<EventView[]>;
 }
 
 type ErrorData = { code: ErrorCode; message: string };
@@ -68,5 +70,6 @@ export function convexClient(url: string, token: string): TixClient {
     addBlocker: (args) => call(() => http.mutation(api.blockers.add, { ...args, token })),
     removeBlocker: (args) => call(() => http.mutation(api.blockers.remove, { ...args, token })),
     listProjects: () => call(() => http.query(api.projects.list, { token })),
+    listEvents: (args) => call(() => http.query(api.events.list, { ...args, token })),
   };
 }

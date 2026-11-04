@@ -2,7 +2,7 @@ import type { Infer } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { fail } from "./errors";
-import type { commitValidator } from "./schema";
+import type { commitValidator, eventKindValidator } from "./schema";
 
 // Convex rejects a document above 1 MiB (1,048,576 bytes). The budget leaves room
 // for `_id`, `_creationTime`, and differences between JSON and Convex's own encoding.
@@ -32,6 +32,37 @@ export type TaskView = {
 export type TaskListItem = Omit<TaskView, "description">;
 
 export type TaskSummary = { shortId: string; name: string; completed: boolean };
+
+export type EventKind = Infer<typeof eventKindValidator>;
+
+/** One row of `events.list`. */
+export type EventView = {
+  at: number;
+  projectKey: string;
+  taskShortId: string;
+  taskName: string;
+  kind: EventKind;
+  detail: string | null;
+  machine: string;
+};
+
+/** Adds one row to the activity log. Call it in the mutation that makes the change. */
+export async function logEvent(
+  ctx: MutationCtx,
+  machine: Doc<"machineTokens">,
+  task: Doc<"tasks">,
+  kind: EventKind,
+  detail?: string,
+): Promise<void> {
+  await ctx.db.insert("events", {
+    projectId: task.projectId,
+    taskShortId: task.shortId,
+    taskName: task.name,
+    kind,
+    detail,
+    machine: machine.name,
+  });
+}
 
 export function checkText(field: string, value: string, min: number): void {
   if (value.length < min) fail("INVALID_INPUT", `${field} must have at least ${min} character(s)`);

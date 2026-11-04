@@ -53,6 +53,7 @@ tix delete <id>                      # Also deletes all subtasks
 tix block <id> --by <blocker-id>
 tix unblock <id> --by <blocker-id>
 tix projects                         # Projects with open task counts
+tix log [<id>] [-n <count>]          # Recent activity, newest first
 tix help <command>
 ```
 

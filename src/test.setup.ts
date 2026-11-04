@@ -54,6 +54,7 @@ export function fakeClient(methods: Partial<TixClient> = {}): TixClient {
     addBlocker: unexpected("addBlocker"),
     removeBlocker: unexpected("removeBlocker"),
     listProjects: unexpected("listProjects"),
+    listEvents: unexpected("listEvents"),
     ...methods,
   };
 }

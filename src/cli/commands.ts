@@ -7,6 +7,7 @@ import { remove } from "./delete.ts";
 import { done } from "./done.ts";
 import { edit } from "./edit.ts";
 import { list } from "./list.ts";
+import { log } from "./log.ts";
 import { login } from "./login.ts";
 import { mcp } from "./mcp.ts";
 import { plan } from "./plan.ts";
@@ -38,6 +39,7 @@ export const commands: Command[] = [
   done,
   reopen,
   remove,
+  log,
   block,
   unblock,
   plan,

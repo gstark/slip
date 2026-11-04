@@ -249,6 +249,7 @@ Every command accepts `--json` and `--project <key>`. Argument parsing uses `nod
 | `tix unblock <id> --by <id>` | Remove a blocker. |
 | `tix plan <file.md>` | Create one task from a plan document. |
 | `tix projects` | List projects with open task counts. |
+| `tix log [<id>] [-n count] [--all-projects]` | Show recent activity, newest first. |
 | `tix login --url <url> --token <token>` | Write the local configuration. |
 | `tix mcp` | Start the MCP server on stdio. |
 | `tix help [command]` | Show help. |

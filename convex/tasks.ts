@@ -14,6 +14,7 @@ import {
   descendantsOf,
   findProject,
   findTask,
+  logEvent,
   newShortId,
   projectKeyOf,
   summaryOf,
@@ -32,7 +33,7 @@ export const create = mutation({
     parent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireMachine(ctx, args.token);
+    const machine = await requireMachine(ctx, args.token);
     checkText("projectKey", args.projectKey, 1);
     checkText("name", args.name, 1);
     const description = args.description ?? "";
@@ -60,8 +61,9 @@ export const create = mutation({
       completed: false,
     };
     checkDocSize(doc);
-    const id = await ctx.db.insert("tasks", doc);
-    return toView(ctx, (await ctx.db.get(id))!, args.projectKey);
+    const task = (await ctx.db.get(await ctx.db.insert("tasks", doc)))!;
+    await logEvent(ctx, machine, task, "created");
+    return toView(ctx, task, args.projectKey);
   },
 });
 
@@ -99,7 +101,7 @@ export const update = mutation({
     parent: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
-    await requireMachine(ctx, args.token);
+    const machine = await requireMachine(ctx, args.token);
     const task = await findTask(ctx, args.id);
     const patch: Partial<Pick<Doc<"tasks">, "name" | "description" | "priority" | "parentId">> = {};
 
@@ -123,8 +125,11 @@ export const update = mutation({
       patch.parentId = parent._id;
     }
 
+    const fields = Object.keys(patch).map((key) => (key === "parentId" ? "parent" : key));
+    if (fields.length === 0) return viewOf(ctx, task);
     checkDocSize({ ...task, ...patch });
     await ctx.db.patch(task._id, patch);
+    await logEvent(ctx, machine, { ...task, ...patch }, "edited", fields.join(", "));
     return viewOf(ctx, { ...task, ...patch });
   },
 });
@@ -132,12 +137,13 @@ export const update = mutation({
 export const start = mutation({
   args: { token: v.string(), id: v.string() },
   handler: async (ctx, { token, id }) => {
-    await requireMachine(ctx, token);
+    const machine = await requireMachine(ctx, token);
     const task = await findTask(ctx, id);
     if (task.completed) fail("INVALID_INPUT", `Task ${task.shortId} is closed. Reopen it first`);
     if (task.startedAt !== undefined) return viewOf(ctx, task);
     const patch = { startedAt: Date.now() };
     await ctx.db.patch(task._id, patch);
+    await logEvent(ctx, machine, task, "started");
     return viewOf(ctx, { ...task, ...patch });
   },
 });
@@ -150,7 +156,7 @@ export const complete = mutation({
     commit: v.optional(commitValidator),
   },
   handler: async (ctx, args) => {
-    await requireMachine(ctx, args.token);
+    const machine = await requireMachine(ctx, args.token);
     const task = await findTask(ctx, args.id);
     if (args.result !== undefined) checkText("result", args.result, 0);
     const open = (await descendantsOf(ctx, task._id)).filter((child) => !child.completed);
@@ -165,6 +171,13 @@ export const complete = mutation({
     if (args.commit !== undefined) patch.commit = args.commit;
     checkDocSize({ ...task, ...patch });
     await ctx.db.patch(task._id, patch);
+    if (!task.completed) {
+      await logEvent(ctx, machine, task, "closed");
+    } else {
+      // A second close changes only the result and the commit.
+      const fields = (["result", "commit"] as const).filter((key) => args[key] !== undefined);
+      if (fields.length > 0) await logEvent(ctx, machine, task, "edited", fields.join(", "));
+    }
     return viewOf(ctx, { ...task, ...patch });
   },
 });
@@ -172,10 +185,12 @@ export const complete = mutation({
 export const reopen = mutation({
   args: { token: v.string(), id: v.string() },
   handler: async (ctx, { token, id }) => {
-    await requireMachine(ctx, token);
+    const machine = await requireMachine(ctx, token);
     const task = await findTask(ctx, id);
+    if (!task.completed) return viewOf(ctx, task);
     const patch = { completed: false, completedAt: undefined };
     await ctx.db.patch(task._id, patch);
+    await logEvent(ctx, machine, task, "reopened");
     return viewOf(ctx, { ...task, ...patch });
   },
 });
@@ -183,7 +198,7 @@ export const reopen = mutation({
 export const remove = mutation({
   args: { token: v.string(), id: v.string() },
   handler: async (ctx, { token, id }) => {
-    await requireMachine(ctx, token);
+    const machine = await requireMachine(ctx, token);
     const task = await findTask(ctx, id);
     const doomed = [task, ...(await descendantsOf(ctx, task._id))];
 
@@ -202,7 +217,10 @@ export const remove = mutation({
     }
 
     for (const rowId of rowIds) await ctx.db.delete(rowId);
-    for (const { _id } of doomed) await ctx.db.delete(_id);
+    for (const doomedTask of doomed) {
+      await logEvent(ctx, machine, doomedTask, "deleted");
+      await ctx.db.delete(doomedTask._id);
+    }
     return doomed.map((doomedTask) => doomedTask.shortId);
   },
 });

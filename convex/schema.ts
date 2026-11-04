@@ -7,6 +7,17 @@ export const commitValidator = v.object({
   message: v.optional(v.string()),
 });
 
+export const eventKindValidator = v.union(
+  v.literal("created"),
+  v.literal("edited"),
+  v.literal("started"),
+  v.literal("closed"),
+  v.literal("reopened"),
+  v.literal("deleted"),
+  v.literal("blocked"),
+  v.literal("unblocked"),
+);
+
 export default defineSchema({
   projects: defineTable({
     key: v.string(),
@@ -36,6 +47,20 @@ export default defineSchema({
   })
     .index("by_blocker", ["blockerId"])
     .index("by_blocked", ["blockedId", "blockerId"]),
+
+  // One row for each change to a task. The row copies the short ID and the name,
+  // so the log can show a task after it is deleted.
+  events: defineTable({
+    projectId: v.id("projects"),
+    taskShortId: v.string(),
+    taskName: v.string(),
+    kind: eventKindValidator,
+    // The changed fields for "edited". The other task for "blocked" and "unblocked".
+    detail: v.optional(v.string()),
+    machine: v.string(),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_task", ["taskShortId"]),
 
   machineTokens: defineTable({
     name: v.string(),

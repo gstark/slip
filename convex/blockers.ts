@@ -4,7 +4,7 @@ import type { QueryCtx } from "./_generated/server";
 import { mutation } from "./_generated/server";
 import { requireMachine } from "./auth";
 import { fail } from "./errors";
-import { findTask, viewOf } from "./model";
+import { findTask, logEvent, viewOf } from "./model";
 
 async function findRow(ctx: QueryCtx, blockedId: Id<"tasks">, blockerId: Id<"tasks">) {
   return ctx.db
@@ -36,7 +36,7 @@ const pairArgs = { token: v.string(), blocked: v.string(), blocker: v.string() }
 export const add = mutation({
   args: pairArgs,
   handler: async (ctx, args) => {
-    await requireMachine(ctx, args.token);
+    const machine = await requireMachine(ctx, args.token);
     const blocked = await findTask(ctx, args.blocked);
     const blocker = await findTask(ctx, args.blocker);
     if (blocked._id === blocker._id) fail("BLOCKER_CYCLE", "A task cannot block itself");
@@ -48,6 +48,7 @@ export const add = mutation({
         fail("BLOCKER_CYCLE", `Task ${blocker.shortId} already waits on ${blocked.shortId}`);
       }
       await ctx.db.insert("blockers", { blockedId: blocked._id, blockerId: blocker._id });
+      await logEvent(ctx, machine, blocked, "blocked", blocker.shortId);
     }
     return viewOf(ctx, blocked);
   },
@@ -56,12 +57,13 @@ export const add = mutation({
 export const remove = mutation({
   args: pairArgs,
   handler: async (ctx, args) => {
-    await requireMachine(ctx, args.token);
+    const machine = await requireMachine(ctx, args.token);
     const blocked = await findTask(ctx, args.blocked);
     const blocker = await findTask(ctx, args.blocker);
     const row = await findRow(ctx, blocked._id, blocker._id);
     if (!row) fail("NOT_FOUND", `Task ${blocker.shortId} does not block ${blocked.shortId}`);
     await ctx.db.delete(row._id);
+    await logEvent(ctx, machine, blocked, "unblocked", blocker.shortId);
     return viewOf(ctx, blocked);
   },
 });

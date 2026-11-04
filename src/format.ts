@@ -1,5 +1,5 @@
 import { styleText } from "node:util";
-import type { ProjectCount, TaskDetail, TaskListItem, TaskSummary } from "./client.ts";
+import type { EventView, ProjectCount, TaskDetail, TaskListItem, TaskSummary } from "./client.ts";
 
 // styleText adds no color when stdout is not a terminal or NO_COLOR is set.
 const dim = (text: string) => styleText("dim", text);
@@ -104,4 +104,31 @@ export function formatDetail(task: TaskDetail): string[] {
 export function formatProjects(projects: ProjectCount[]): string[] {
   const width = Math.max(0, ...projects.map((project) => project.key.length));
   return projects.map((project) => `${project.key.padEnd(width)}  ${project.openCount} open`);
+}
+
+const KIND_COLORS: Record<EventView["kind"], Parameters<typeof styleText>[0]> = {
+  created: "cyan",
+  edited: "magenta",
+  started: "blue",
+  closed: "green",
+  reopened: "yellow",
+  deleted: "red",
+  blocked: "red",
+  unblocked: "green",
+};
+
+function localTime(ms: number): string {
+  const date = new Date(ms);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** One line for each event: local time, kind, short ID, name, detail, machine. */
+export function formatEvents(events: EventView[], showProject: boolean): string[] {
+  return events.map((event) => {
+    const kind = styleText(KIND_COLORS[event.kind], event.kind.padEnd(9));
+    const detail = event.detail === null ? "" : ` ${dim(`(${event.kind === "edited" ? "" : "blocker "}${event.detail})`)}`;
+    const project = showProject ? `${dim(event.projectKey)} ` : "";
+    return `${dim(localTime(event.at))}  ${kind} ${project}${bold(event.taskShortId)}: ${event.taskName}${detail} ${dim(`@${event.machine}`)}`;
+  });
 }

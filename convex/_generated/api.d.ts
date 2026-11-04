@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as blockers from "../blockers.js";
 import type * as errors from "../errors.js";
+import type * as events from "../events.js";
 import type * as model from "../model.js";
 import type * as projects from "../projects.js";
 import type * as tasks from "../tasks.js";
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   blockers: typeof blockers;
   errors: typeof errors;
+  events: typeof events;
   model: typeof model;
   projects: typeof projects;
   tasks: typeof tasks;
