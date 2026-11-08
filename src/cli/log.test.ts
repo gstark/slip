@@ -43,6 +43,16 @@ describe("slip log", () => {
     expect(remoteUrl).not.toHaveBeenCalled();
   });
 
+  it("names the file of an attach or a detach", async () => {
+    const { client } = logging([event({ kind: "attached", detail: "shot.png" }), event({ kind: "detached", detail: "shot.png" })]);
+    expect((await runCli(["log"], { client })).out).toBe(
+      [
+        "2026-11-04 09:05  attached  a1: Fix (shot.png) @laptop",
+        "2026-11-04 09:05  detached  a1: Fix (shot.png) @laptop",
+      ].join("\n"),
+    );
+  });
+
   it("shows one task and does not read git", async () => {
     const { listEvents, client } = logging([]);
     const remoteUrl = vi.fn(async () => null);

@@ -6,7 +6,7 @@ import type { KeyEvent, ScrollBoxRenderable } from "@opentui/core";
 import { useKeyboard, useRenderer, useSelectionHandler, useTerminalDimensions } from "@opentui/react";
 import { useMemo, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api.js";
-import type { ListFilter, TaskListItem } from "../client.ts";
+import type { AttachmentView, ListFilter, TaskListItem } from "../client.ts";
 import type { Git } from "../git.ts";
 import { boardRows, matches, statusCounts, statusOf, taskRows } from "./board.ts";
 import { Board, rowId } from "./Board.tsx";
@@ -16,6 +16,7 @@ import type { Live } from "./live.ts";
 import { useConnected, useLive } from "./live.ts";
 import { clampBoardWidth, NARROW, resolveBoardWidth } from "./split.ts";
 import { color, markdownStyle, statusColor } from "./theme.ts";
+import { openAttachment } from "./open.ts";
 import { Ticket } from "./Ticket.tsx";
 
 export type Scope = { kind: "project"; key: string } | { kind: "all" };
@@ -334,6 +335,23 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     copy: () => {
       if (item !== null) copyText(item.shortId, `Copied ${item.shortId}`);
     },
+    open: (file: AttachmentView) => {
+      if (task === undefined) return;
+      const shortId = task.shortId;
+      act(`Opened ${file.name}`, () => openAttachment(shortId, file));
+    },
+    files: () => {
+      if (task === undefined) return;
+      if (task.attachments.length === 1) return actions.open(task.attachments[0]);
+      const byName = new Map(task.attachments.map((file) => [file.name, file]));
+      setDialog({
+        kind: "picker",
+        title: `Open a file of ${task.shortId}`,
+        choices: task.attachments.map((file) => ({ value: file.name, label: file.name, detail: file.contentType })),
+        empty: "This task has no files. Add one with slip attach",
+        onPick: (name) => actions.open(byName.get(name)!),
+      });
+    },
     projects: () => {
       const choices: Choice[] = [
         { value: "", label: "All projects", detail: "every project, grouped" },
@@ -481,6 +499,8 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
         return actions.remove();
       case "y":
         return actions.copy();
+      case "O":
+        return actions.files();
       case "?":
         return actions.help();
     }
@@ -547,8 +567,10 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
               syntaxStyle={syntaxStyle}
               // The scrollbox pads 2 columns on each side.
               width={(narrow ? width : width - boardWidth) - 4}
+              imageRows={Math.max(6, height - 12)}
               scrollRef={ticketRef}
               onJump={jump}
+              onOpen={actions.open}
             />
           </box>
         )}

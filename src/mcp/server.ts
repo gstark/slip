@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod";
+import { attachFile } from "../attach.ts";
 import type { SlipClient } from "../client.ts";
 import { SlipError } from "../errors.ts";
 import type { Git } from "../git.ts";
@@ -168,6 +169,35 @@ export function createMcpServer(ctx: McpContext): McpServer {
         const client = await ctx.client();
         const ids = { blocked: args.id, blocker: args.blocker };
         return args.action === "add" ? client.addBlocker(ids) : client.removeBlocker(ids);
+      }),
+  );
+
+  server.registerTool(
+    "manage_attachments",
+    {
+      description: [
+        "Add or remove a file on a task, such as a screenshot, a log, or a design.",
+        "add: upload the local file at path. The name is the file name unless you give name. A file with the same name is replaced. The limit is 10 MB.",
+        "remove: delete the file with this name.",
+        "show_task lists the files with a download URL.",
+      ].join("\n"),
+      inputSchema: {
+        action: z.enum(["add", "remove"]),
+        id: z.string().min(1).describe("Short ID of the task"),
+        path: z.string().min(1).optional().describe("For add: the file path. A relative path starts at the working directory"),
+        name: z.string().min(1).optional().describe("For add: the name on the task. For remove: the name to delete"),
+      },
+    },
+    (args) =>
+      respond(async () => {
+        const client = await ctx.client();
+        if (args.action === "add") {
+          if (args.path === undefined) throw new SlipError("USAGE", "path is required with action add");
+          return attachFile(client, { id: args.id, path: args.path, cwd: ctx.cwd, name: args.name });
+        }
+        if (args.path !== undefined) throw new SlipError("USAGE", "path cannot be used with action remove");
+        if (args.name === undefined) throw new SlipError("USAGE", "name is required with action remove");
+        return { removed: await client.removeAttachment({ id: args.id, name: args.name }) };
       }),
   );
 

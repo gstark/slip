@@ -38,7 +38,7 @@ describe("slip mcp", () => {
       for await (const line of lines) {
         const message = JSON.parse(line);
         if (message.id !== 2) continue;
-        expect(message.result.tools).toHaveLength(5);
+        expect(message.result.tools).toHaveLength(6);
         return;
       }
       expect.unreachable("The server closed stdout before it answered tools/list");

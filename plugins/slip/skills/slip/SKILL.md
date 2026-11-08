@@ -43,7 +43,7 @@ slip list --ready                     # Open tasks that no open task blocks
 slip list --closed                    # Closed tasks
 slip list --all-projects              # Tasks of all projects
 slip list <id> <id>                   # Only these tasks and the tasks under them
-slip show <id>                        # All fields, subtasks, and blockers
+slip show <id>                        # All fields, subtasks, blockers, and files
 slip create "<name>" -d "<description>" [-p <priority>] [--parent <id>]
 slip edit <id> [--name <n>] [-d <desc>] [-p <prio>] [--parent <id> | --no-parent]
 slip start <id>                       # Record the start time
@@ -52,6 +52,8 @@ slip reopen <id>
 slip delete <id>                      # Also deletes all subtasks
 slip block <id> --by <blocker-id>
 slip unblock <id> --by <blocker-id>
+slip attach <id> <file>... [--name <name>]  # Put files, such as screenshots, on a task
+slip detach <id> <name>               # Delete a file from a task
 slip projects                         # Projects with open task counts
 slip log [<id>] [-n <count>]          # Recent activity, newest first
 slip help <command>
@@ -106,6 +108,19 @@ Use a blocker when one task must close before another can start. `slip list --re
 slip block <id> --by <blocker-id>
 ```
 
+## Attachments
+
+Attach a file when it shows the work better than text does. Good examples are a screenshot of a UI change, a failing log, or a design image.
+
+```bash
+slip attach <id> screenshot.png
+```
+
+- A file with the same name on the task is replaced. Use the same name to update a screenshot.
+- The limit is 10 MB for each file.
+- `slip show <id>` lists the files with a download URL.
+- The board draws images in the ticket pane.
+
 ## Close a Task
 
 Close a task immediately after you implement and verify it:
@@ -140,4 +155,4 @@ A bad result: "Done. Added auth."
 
 ## MCP Tools
 
-The slip plugin also starts `slip mcp`. Its tools are `create_task`, `list_tasks`, `show_task`, `update_task`, and `manage_blockers`. They do the same as the CLI. Use the tools or the CLI, whichever is available.
+The slip plugin also starts `slip mcp`. Its tools are `create_task`, `list_tasks`, `show_task`, `update_task`, `manage_blockers`, and `manage_attachments`. They do the same as the CLI. Use the tools or the CLI, whichever is available.

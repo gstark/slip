@@ -8,10 +8,12 @@
  * @module
  */
 
+import type * as attachments from "../attachments.js";
 import type * as auth from "../auth.js";
 import type * as blockers from "../blockers.js";
 import type * as errors from "../errors.js";
 import type * as events from "../events.js";
+import type * as limits from "../limits.js";
 import type * as model from "../model.js";
 import type * as projects from "../projects.js";
 import type * as tasks from "../tasks.js";
@@ -24,10 +26,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  attachments: typeof attachments;
   auth: typeof auth;
   blockers: typeof blockers;
   errors: typeof errors;
   events: typeof events;
+  limits: typeof limits;
   model: typeof model;
   projects: typeof projects;
   tasks: typeof tasks;

@@ -1,10 +1,11 @@
 /** @jsxImportSource @opentui/react */
 import { StyledText, TextRenderable, createMarkdownCodeBlockRenderer, fg } from "@opentui/core";
-import type { RenderContext, ScrollBoxRenderable, SyntaxStyle } from "@opentui/core";
+import type { ImageRenderable, RenderContext, ScrollBoxRenderable, SyntaxStyle } from "@opentui/core";
 import { useRenderer } from "@opentui/react";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
-import type { TaskDetail, TaskListItem, TaskSummary } from "../client.ts";
+import { formatSize, isImage } from "../attach.ts";
+import type { AttachmentView, TaskDetail, TaskListItem, TaskSummary } from "../client.ts";
 import { statusOf } from "./board.ts";
 import { Flap } from "./Flap.tsx";
 import { mermaidArt, strokes } from "./mermaid.ts";
@@ -20,11 +21,14 @@ type Props = {
   syntaxStyle: SyntaxStyle;
   /** The columns for the text, inside the padding. */
   width: number;
+  /** The most rows that one image can use. */
+  imageRows: number;
   scrollRef: RefObject<ScrollBoxRenderable | null>;
   onJump: (shortId: string) => void;
+  onOpen: (file: AttachmentView) => void;
 };
 
-export function Ticket({ item, detail, error, syntaxStyle, width, scrollRef, onJump }: Props) {
+export function Ticket({ item, detail, error, syntaxStyle, width, imageRows, scrollRef, onJump, onOpen }: Props) {
   const renderer = useRenderer();
   const renderNode = useMemo(() => mermaidBlocks(renderer, width), [renderer, width]);
   if (item === null) {
@@ -117,6 +121,13 @@ export function Ticket({ item, detail, error, syntaxStyle, width, scrollRef, onJ
               <Links tasks={task.blocks} onJump={onJump} />
             </Section>
           )}
+          {task.attachments.length > 0 && (
+            <Section title={`Attachments  ${task.attachments.length}`}>
+              {task.attachments.map((file) => (
+                <Attachment key={file.name} file={file} width={width} rows={imageRows} onOpen={() => onOpen(file)} />
+              ))}
+            </Section>
+          )}
           <box height={1} />
         </>
       )}
@@ -154,6 +165,43 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
         <strong>{title}</strong>
       </text>
       {children}
+    </box>
+  );
+}
+
+/** The name and size of a file. An image also shows inline. A click opens the file in the system viewer. */
+function Attachment({ file, width, rows, onOpen }: { file: AttachmentView; width: number; rows: number; onOpen: () => void }) {
+  const ref = useRef<ImageRenderable>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const showImage = file.url !== null && isImage(file.contentType) && failed === null;
+  // The fitted size needs the pixel size of the image, so it is known only after the load.
+  const fitted = loaded && ref.current !== null ? ref.current.getFittedSize(width, rows) : null;
+  return (
+    <box flexDirection="column" marginBottom={showImage ? 1 : 0}>
+      <box height={1} onMouseDown={onOpen}>
+        <text wrapMode="none">
+          <span fg={color.flap}>
+            <u>{file.name}</u>
+          </span>
+          <span fg={color.soot}>{`  ${formatSize(file.size)}`}</span>
+          {showImage && !loaded && <span fg={color.soot}>{"  loading…"}</span>}
+          {failed !== null && <span fg={color.signal}>{`  cannot show the image: ${failed}`}</span>}
+          {file.url === null && <span fg={color.signal}>{"  the file is gone from storage"}</span>}
+        </text>
+      </box>
+      {showImage && (
+        <image
+          ref={ref}
+          source={file.url!}
+          fit="fit"
+          width={fitted?.width ?? 1}
+          height={fitted?.height ?? 1}
+          onLoad={() => setLoaded(true)}
+          onError={(error) => setFailed(error instanceof Error ? error.message : String(error))}
+          onMouseDown={onOpen}
+        />
+      )}
     </box>
   );
 }

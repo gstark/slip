@@ -33,6 +33,15 @@ export type TaskListItem = Omit<TaskView, "description">;
 
 export type TaskSummary = { shortId: string; name: string; completed: boolean };
 
+/** One file on a task. `url` downloads the bytes, and is null if the file is gone from storage. */
+export type AttachmentView = {
+  name: string;
+  contentType: string;
+  size: number;
+  url: string | null;
+  createdAt: number;
+};
+
 export type EventKind = Infer<typeof eventKindValidator>;
 
 /** One row of `events.list`. */
@@ -221,4 +230,21 @@ export async function viewOf(ctx: QueryCtx, task: Doc<"tasks">): Promise<TaskVie
 export async function summaryOf(ctx: QueryCtx, taskId: Id<"tasks">): Promise<TaskSummary | null> {
   const task = await ctx.db.get(taskId);
   return task && { shortId: task.shortId, name: task.name, completed: task.completed };
+}
+
+export async function attachmentRowsOf(ctx: QueryCtx, taskId: Id<"tasks">): Promise<Doc<"attachments">[]> {
+  return ctx.db
+    .query("attachments")
+    .withIndex("by_task_name", (q) => q.eq("taskId", taskId))
+    .collect();
+}
+
+export async function attachmentView(ctx: QueryCtx, row: Doc<"attachments">): Promise<AttachmentView> {
+  return {
+    name: row.name,
+    contentType: row.contentType,
+    size: row.size,
+    url: await ctx.storage.getUrl(row.storageId),
+    createdAt: row._creationTime,
+  };
 }

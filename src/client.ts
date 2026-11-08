@@ -2,6 +2,7 @@ import { ConvexHttpClient } from "convex/browser";
 import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { api } from "../convex/_generated/api.js";
+import type { Id } from "../convex/_generated/dataModel.js";
 import type { ErrorCode } from "../convex/errors.ts";
 import { SlipError } from "./errors.ts";
 
@@ -14,6 +15,8 @@ export type TaskSummary = TaskDetail["blockers"][number];
 export type ProjectCount = FunctionReturnType<typeof api.projects.list>[number];
 export type Commit = NonNullable<TaskView["commit"]>;
 export type EventView = FunctionReturnType<typeof api.events.list>[number];
+export type AttachmentView = TaskDetail["attachments"][number];
+export type StorageId = Id<"_storage">;
 export type ListFilter = Args<typeof api.tasks.list>["filter"];
 
 /** The calls that the CLI and the MCP server make. Tests use a fake. */
@@ -30,6 +33,10 @@ export interface SlipClient {
   removeBlocker(args: Args<typeof api.blockers.remove>): Promise<TaskView>;
   listProjects(): Promise<ProjectCount[]>;
   listEvents(args: Args<typeof api.events.list>): Promise<EventView[]>;
+  /** Sends the bytes to Convex file storage. Pass the ID to `addAttachment`. */
+  uploadFile(data: Uint8Array, contentType: string): Promise<StorageId>;
+  addAttachment(args: Args<typeof api.attachments.add>): Promise<AttachmentView>;
+  removeAttachment(args: Args<typeof api.attachments.remove>): Promise<string>;
 }
 
 type ErrorData = { code: ErrorCode; message: string };
@@ -71,5 +78,15 @@ export function convexClient(url: string, token: string): SlipClient {
     removeBlocker: (args) => call(() => http.mutation(api.blockers.remove, { ...args, token })),
     listProjects: () => call(() => http.query(api.projects.list, { token })),
     listEvents: (args) => call(() => http.query(api.events.list, { ...args, token })),
+    uploadFile: (data, contentType) =>
+      call(async () => {
+        const uploadUrl = await http.mutation(api.attachments.uploadUrl, { token });
+        const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": contentType }, body: data });
+        if (!response.ok) throw new SlipError("NETWORK", `The upload failed with HTTP ${response.status}`);
+        const { storageId } = (await response.json()) as { storageId: StorageId };
+        return storageId;
+      }),
+    addAttachment: (args) => call(() => http.mutation(api.attachments.add, { ...args, token })),
+    removeAttachment: (args) => call(() => http.mutation(api.attachments.remove, { ...args, token })),
   };
 }

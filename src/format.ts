@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+import { formatSize } from "./attach.ts";
 import type { EventView, ProjectCount, TaskDetail, TaskListItem, TaskSummary } from "./client.ts";
 
 // styleText adds no color when stdout is not a terminal or NO_COLOR is set.
@@ -94,6 +95,10 @@ export function formatDetail(task: TaskDetail): string[] {
     ["Subtasks", task.children.map((child) => formatLine(child))],
     ["Blocked by", task.blockers.map(formatSummary)],
     ["Blocks", task.blocks.map(formatSummary)],
+    [
+      "Attachments",
+      task.attachments.map((file) => `${bold(file.name)} ${dim(`${file.contentType}, ${formatSize(file.size)}`)}${file.url ? `\n    ${dim(file.url)}` : ""}`),
+    ],
   ];
   for (const [title, items] of sections) {
     if (items.length > 0) lines.push("", bold(title), ...items.map((item) => `  ${item}`));
@@ -115,6 +120,8 @@ const KIND_COLORS: Record<EventView["kind"], Parameters<typeof styleText>[0]> = 
   deleted: "red",
   blocked: "red",
   unblocked: "green",
+  attached: "cyan",
+  detached: "red",
 };
 
 function localTime(ms: number): string {
@@ -127,7 +134,8 @@ function localTime(ms: number): string {
 export function formatEvents(events: EventView[], showProject: boolean): string[] {
   return events.map((event) => {
     const kind = styleText(KIND_COLORS[event.kind], event.kind.padEnd(9));
-    const detail = event.detail === null ? "" : ` ${dim(`(${event.kind === "edited" ? "" : "blocker "}${event.detail})`)}`;
+    const label = event.kind === "blocked" || event.kind === "unblocked" ? "blocker " : "";
+    const detail = event.detail === null ? "" : ` ${dim(`(${label}${event.detail})`)}`;
     const project = showProject ? `${dim(event.projectKey)} ` : "";
     return `${dim(localTime(event.at))}  ${kind} ${project}${bold(event.taskShortId)}: ${event.taskName}${detail} ${dim(`@${event.machine}`)}`;
   });

@@ -1,7 +1,10 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Commit, SlipClient } from "../client.ts";
+import type { Commit, SlipClient, StorageId } from "../client.ts";
 import { SlipError } from "../errors.ts";
 import type { Git } from "../git.ts";
 import { PROJECT, fakeClient, listItem, taskDetail, taskView } from "../test.setup.ts";
@@ -47,6 +50,7 @@ describe("slip MCP server", () => {
       "show_task",
       "update_task",
       "manage_blockers",
+      "manage_attachments",
     ]);
   });
 
@@ -171,6 +175,45 @@ describe("slip MCP server", () => {
     await call("manage_blockers", { action: "remove", id: "a1", blocker: "b1" });
     expect(addBlocker).toHaveBeenCalledWith({ blocked: "a1", blocker: "b1" });
     expect(removeBlocker).toHaveBeenCalledWith({ blocked: "a1", blocker: "b1" });
+  });
+
+  it("uploads a local file and removes a file by name", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "slip-mcp-"));
+    const path = join(dir, "shot.png");
+    await writeFile(path, "png");
+    const uploadFile = vi.fn<SlipClient["uploadFile"]>(async () => "storage1" as StorageId);
+    const addAttachment = vi.fn<SlipClient["addAttachment"]>(async (args) => ({
+      name: args.name,
+      contentType: "image/png",
+      size: 3,
+      url: "https://x/1",
+      createdAt: 0,
+    }));
+    const removeAttachment = vi.fn<SlipClient["removeAttachment"]>(async () => "shot.png");
+    const { call } = await connect(fakeClient({ uploadFile, addAttachment, removeAttachment }));
+    try {
+      const added = await call("manage_attachments", { action: "add", id: "a1", path });
+      expect(JSON.parse(added.text)).toMatchObject({ name: "shot.png", url: "https://x/1" });
+      expect(uploadFile).toHaveBeenCalledWith(expect.any(Uint8Array), "image/png");
+      expect(addAttachment).toHaveBeenCalledWith({ id: "a1", storageId: "storage1", name: "shot.png" });
+
+      const removed = await call("manage_attachments", { action: "remove", id: "a1", name: "shot.png" });
+      expect(JSON.parse(removed.text)).toEqual({ removed: "shot.png" });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("requires path for add and name for remove", async () => {
+    const { call } = await connect(fakeClient());
+    expect(await call("manage_attachments", { action: "add", id: "a1" })).toEqual({
+      isError: true,
+      text: "path is required with action add",
+    });
+    expect(await call("manage_attachments", { action: "remove", id: "a1" })).toEqual({
+      isError: true,
+      text: "name is required with action remove",
+    });
   });
 
   it("returns server errors as error results", async () => {

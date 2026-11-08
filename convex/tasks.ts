@@ -2,10 +2,13 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { deleteRow } from "./attachments";
 import { requireMachine } from "./auth";
 import { fail } from "./errors";
 import type { TaskListItem, TaskSummary } from "./model";
 import {
+  attachmentRowsOf,
+  attachmentView,
   checkDocSize,
   checkParent,
   checkPriority,
@@ -87,7 +90,8 @@ export const get = query({
     const isSummary = (summary: TaskSummary | null): summary is TaskSummary => summary !== null;
     const blockers = (await Promise.all(blockerRows.map((row) => summaryOf(ctx, row.blockerId)))).filter(isSummary);
     const blocks = (await Promise.all(blocksRows.map((row) => summaryOf(ctx, row.blockedId)))).filter(isSummary);
-    return { ...view, children, blockers, blocks };
+    const attachments = await Promise.all((await attachmentRowsOf(ctx, task._id)).map((row) => attachmentView(ctx, row)));
+    return { ...view, children, blockers, blocks, attachments };
   },
 });
 
@@ -218,6 +222,7 @@ export const remove = mutation({
 
     for (const rowId of rowIds) await ctx.db.delete(rowId);
     for (const doomedTask of doomed) {
+      for (const row of await attachmentRowsOf(ctx, doomedTask._id)) await deleteRow(ctx, row._id, row.storageId);
       await logEvent(ctx, machine, doomedTask, "deleted");
       await ctx.db.delete(doomedTask._id);
     }

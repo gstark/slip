@@ -246,6 +246,7 @@ export const KEYS: [string, [string, string][]][] = [
       ["b u", "Add or remove a blocker"],
       ["x", "Delete the task and its subtasks"],
       ["y", "Copy the short ID"],
+      ["O", "Open a file of the task in the default app"],
       ["drag", "Copy the text that you select with the mouse"],
       ["drag line", "Resize the list and the ticket"],
     ],

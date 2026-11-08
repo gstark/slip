@@ -16,6 +16,8 @@ export const eventKindValidator = v.union(
   v.literal("deleted"),
   v.literal("blocked"),
   v.literal("unblocked"),
+  v.literal("attached"),
+  v.literal("detached"),
 );
 
 export default defineSchema({
@@ -41,6 +43,15 @@ export default defineSchema({
     .index("by_project_completed_priority", ["projectId", "completed", "priority"])
     .index("by_completed_priority", ["completed", "priority"]),
 
+  // A file on a task. The bytes are in Convex file storage. A name is unique in one task.
+  attachments: defineTable({
+    taskId: v.id("tasks"),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+  }).index("by_task_name", ["taskId", "name"]),
+
   blockers: defineTable({
     blockerId: v.id("tasks"),
     blockedId: v.id("tasks"),
@@ -56,6 +67,7 @@ export default defineSchema({
     taskName: v.string(),
     kind: eventKindValidator,
     // The changed fields for "edited". The other task for "blocked" and "unblocked".
+    // The file name for "attached" and "detached".
     detail: v.optional(v.string()),
     machine: v.string(),
   })

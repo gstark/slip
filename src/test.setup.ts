@@ -33,7 +33,7 @@ export function listItem(fields: Partial<TaskListItem> = {}): TaskListItem {
 }
 
 export function taskDetail(fields: Partial<TaskDetail> = {}): TaskDetail {
-  return { ...taskView(fields), children: [], blockers: [], blocks: [], ...fields };
+  return { ...taskView(fields), children: [], blockers: [], blocks: [], attachments: [], ...fields };
 }
 
 /**
@@ -55,6 +55,9 @@ export function fakeClient(methods: Partial<SlipClient> = {}): SlipClient {
     removeBlocker: unexpected("removeBlocker"),
     listProjects: unexpected("listProjects"),
     listEvents: unexpected("listEvents"),
+    uploadFile: unexpected("uploadFile"),
+    addAttachment: unexpected("addAttachment"),
+    removeAttachment: unexpected("removeAttachment"),
     ...methods,
   };
 }

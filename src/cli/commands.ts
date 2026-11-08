@@ -1,6 +1,7 @@
 import { SlipError } from "../errors.ts";
 import type { Command } from "./command.ts";
 import { helpLines } from "./help.ts";
+import { attach, detach } from "./attach.ts";
 import { block } from "./block.ts";
 import { create } from "./create.ts";
 import { remove } from "./delete.ts";
@@ -42,6 +43,8 @@ export const commands: Command[] = [
   log,
   block,
   unblock,
+  attach,
+  detach,
   plan,
   projects,
   login,
