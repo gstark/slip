@@ -43,7 +43,7 @@ export function Ticket({ item, detail, error, syntaxStyle, width, imageRows, scr
   const status = statusOf(item);
   const now = Date.now();
   return (
-    <scrollbox ref={scrollRef} flexGrow={1} paddingLeft={2} paddingRight={2} scrollbarOptions={{ visible: false }}>
+    <scrollbox ref={scrollRef} flexGrow={1} paddingLeft={2} paddingRight={2} focusable={false} scrollbarOptions={{ visible: false }}>
       <box paddingTop={1}>
         <text fg={color.chalk}>
           <strong>{item.name}</strong>

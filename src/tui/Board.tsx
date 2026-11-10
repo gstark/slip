@@ -34,7 +34,7 @@ export function Board({ rows, selectedId, focused, width, scrollRef, onSelect, o
     );
   }
   return (
-    <scrollbox ref={scrollRef} width={width} flexShrink={0} scrollbarOptions={{ visible: false }}>
+    <scrollbox ref={scrollRef} width={width} flexShrink={0} focusable={false} scrollbarOptions={{ visible: false }}>
       {rows.map((row, index) =>
         row.kind === "project" ? (
           <box key={`project-${row.key}`} height={1} marginTop={index === 0 ? 0 : 1} paddingLeft={CURSOR + 1}>
