@@ -28,10 +28,11 @@ export type Row = TaskRow | ProjectRow;
  * Flattens the tasks into board rows. The order of the input is kept. A task
  * whose parent is not listed is a root. With a query, the board keeps the
  * matching tasks and their listed ancestors, and opens collapsed parents.
+ * A parent stays collapsed until `expanded` holds it.
  */
 export function boardRows(
   tasks: TaskListItem[],
-  options: { collapsed: ReadonlySet<string>; query: string; grouped: boolean },
+  options: { expanded: ReadonlySet<string>; query: string; grouped: boolean },
 ): Row[] {
   const byId = new Map(tasks.map((task) => [task.shortId, task]));
   const kept = matching(tasks, byId, options.query.trim().toLowerCase());
@@ -50,7 +51,7 @@ export function boardRows(
   const searching = options.query.trim() !== "";
   const walk = (rows: Row[], task: TaskListItem, guides: string, childGuides: string) => {
     const kids = children.get(task.shortId) ?? [];
-    const collapsed = !searching && kids.length > 0 && options.collapsed.has(task.shortId);
+    const collapsed = !searching && kids.length > 0 && !options.expanded.has(task.shortId);
     rows.push({ kind: "task", task, guides, childCount: kids.length, collapsed });
     if (collapsed) return;
     kids.forEach((kid, index) => {

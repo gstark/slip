@@ -71,7 +71,8 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     latestId.current = shortId;
     setSelected(shortId);
   };
-  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+  // Each parent starts collapsed. The set holds the parents that the user opened.
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [focus, setFocus] = useState<"board" | "ticket">("board");
@@ -91,8 +92,8 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
   const connected = useConnected(live);
   const tasks = list.data ?? [];
   const rows = useMemo(
-    () => boardRows(tasks, { collapsed, query, grouped: scope.kind === "all" }),
-    [tasks, collapsed, query, scope.kind],
+    () => boardRows(tasks, { expanded, query, grouped: scope.kind === "all" }),
+    [tasks, expanded, query, scope.kind],
   );
   const selectable = taskRows(rows);
   const selected = selectable.find((row) => row.task.shortId === selectedId) ?? selectable[0] ?? null;
@@ -159,10 +160,10 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
   };
 
   const setCollapsedFor = (shortId: string, close: boolean) => {
-    setCollapsed((current) => {
+    setExpanded((current) => {
       const next = new Set(current);
-      if (close) next.add(shortId);
-      else next.delete(shortId);
+      if (close) next.delete(shortId);
+      else next.add(shortId);
       return next;
     });
   };
@@ -171,11 +172,11 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
   const jump = (shortId: string) => {
     const byId = new Map(tasks.map((each) => [each.shortId, each]));
     if (!byId.has(shortId)) setFilter("all");
-    setCollapsed((current) => {
+    setExpanded((current) => {
       const next = new Set(current);
       let parent = byId.get(shortId)?.parentShortId ?? null;
       while (parent !== null) {
-        next.delete(parent);
+        next.add(parent);
         parent = byId.get(parent)?.parentShortId ?? null;
       }
       return next;
@@ -377,7 +378,7 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
     find: (next: string) => {
       setQuery(next);
       const needle = next.trim().toLowerCase();
-      const found = taskRows(boardRows(tasks, { collapsed, query: next, grouped: scope.kind === "all" })).find((row) =>
+      const found = taskRows(boardRows(tasks, { expanded, query: next, grouped: scope.kind === "all" })).find((row) =>
         matches(row.task, needle),
       );
       if (found !== undefined) select(found.task.shortId);
@@ -555,7 +556,7 @@ export function App({ live, scope: initialScope, git, cwd, savedBoardWidth: init
               setFocus("board");
               select(shortId);
             }}
-            onToggle={(shortId) => setCollapsedFor(shortId, !collapsed.has(shortId))}
+            onToggle={(shortId) => setCollapsedFor(shortId, expanded.has(shortId))}
           />
         )}
         {showTicket && (

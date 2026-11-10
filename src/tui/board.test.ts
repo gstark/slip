@@ -22,7 +22,7 @@ describe("statusOf", () => {
 });
 
 describe("boardRows", () => {
-  const options = { collapsed: new Set<string>(), query: "", grouped: false };
+  const options = { expanded: new Set(["epic0000"]), query: "", grouped: false };
 
   it("draws the tree with guides", () => {
     expect(names(boardRows([epic, first, second], options))).toEqual([
@@ -32,14 +32,14 @@ describe("boardRows", () => {
     ]);
   });
 
-  it("hides the children of a collapsed task", () => {
-    const rows = boardRows([epic, first, second], { ...options, collapsed: new Set(["epic0000"]) });
+  it("collapses a parent that is not expanded", () => {
+    const rows = boardRows([epic, first, second], { ...options, expanded: new Set() });
     expect(names(rows)).toEqual(["Cutover"]);
     expect(rows[0]).toMatchObject({ collapsed: true, childCount: 2 });
   });
 
   it("keeps the matches and their ancestors, and opens collapsed parents", () => {
-    const rows = boardRows([epic, first, second], { ...options, collapsed: new Set(["epic0000"]), query: "release" });
+    const rows = boardRows([epic, first, second], { ...options, expanded: new Set(), query: "release" });
     expect(names(rows)).toEqual(["Cutover", "└─ Release tools"]);
   });
 
